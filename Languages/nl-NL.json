@@ -1,0 +1,30 @@
+{
+  "language": "nl-NL",
+  "displayName": "Nederlands",
+  "strings": {
+    "positionQuestion": "Waar staat de laptop ten opzichte van de externe beeldschermen?",
+    "laptopOnLeft": "Laptop staat links",
+    "laptopOnRight": "Laptop staat rechts",
+    "beforeContinue": "Voordat je doorgaat",
+    "physicalOrderInformation": "Externe beeldschermen worden ingedeeld in de volgorde die Windows doorgeeft. Zorg dat deze overeenkomt met de fysieke volgorde van links naar rechts. Poortnummers op een dockingstation komen niet altijd overeen met de beeldschermnummers van Windows.",
+    "applyingLayout": "Beeldschermindeling toepassen",
+    "pleaseWait": "Even geduld...",
+    "preparingDisplays": "De aangesloten beeldschermen worden voorbereid.",
+    "layoutApplied": "Beeldschermindeling toegepast",
+    "configurationSuccessful": "De beeldschermen zijn succesvol ingesteld.",
+    "done": "Gereed",
+    "builtInDisplay": "Ingebouwd laptopscherm",
+    "multiMonitorToolMissing": "MultiMonitorTool.exe is vereist maar kon niet worden gevonden.\n\nDownload het programma via de officiële website van NirSoft en plaats het naast MonitorLayoutAssistant.ps1, of geef de locatie op in config.json.",
+    "monitorInformationUnavailable": "De informatie over de aangesloten beeldschermen kon niet worden opgehaald.",
+    "noExternalTitle": "Geen externe beeldschermen gevonden",
+    "noExternalMessage": "Sluit minimaal één extern beeldscherm aan en start Monitor Layout Assistant opnieuw.",
+    "switchingToExtended": "Overschakelen naar een uitgebreid bureaublad...",
+    "detectingMonitors": "Aangesloten beeldschermen detecteren...",
+    "noActiveMonitors": "Er zijn geen actieve beeldschermen gevonden.",
+    "noExternalMonitors": "Er zijn geen externe beeldschermen gevonden.",
+    "applyingResolutions": "De maximaal beschikbare resoluties toepassen...",
+    "arrangingMonitors": "De beeldschermen indelen...",
+    "settingPrimary": "Het hoofdscherm instellen...",
+    "configurationFailed": "Instellen van beeldschermen mislukt"
+  }
+}

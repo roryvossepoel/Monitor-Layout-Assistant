@@ -1,0 +1,30 @@
+{
+  "language": "en-US",
+  "displayName": "English",
+  "strings": {
+    "positionQuestion": "Where is the laptop positioned relative to the external monitors?",
+    "laptopOnLeft": "Laptop on the left",
+    "laptopOnRight": "Laptop on the right",
+    "beforeContinue": "Before you continue",
+    "physicalOrderInformation": "External monitors are arranged in the order reported by Windows. Ensure this order matches their physical left-to-right position. Docking station port labels do not necessarily match Windows display numbers.",
+    "applyingLayout": "Applying monitor layout",
+    "pleaseWait": "Please wait...",
+    "preparingDisplays": "Preparing the connected displays.",
+    "layoutApplied": "Monitor layout applied",
+    "configurationSuccessful": "The monitors were configured successfully.",
+    "done": "Done",
+    "builtInDisplay": "Built-in laptop display",
+    "multiMonitorToolMissing": "MultiMonitorTool.exe is required but could not be found.\n\nDownload it from the official NirSoft website and place it next to MonitorLayoutAssistant.ps1, or specify its location in config.json.",
+    "monitorInformationUnavailable": "Connected display information could not be retrieved.",
+    "noExternalTitle": "No external monitors found",
+    "noExternalMessage": "Connect at least one external monitor and start Monitor Layout Assistant again.",
+    "switchingToExtended": "Switching to extended desktop mode...",
+    "detectingMonitors": "Detecting connected monitors...",
+    "noActiveMonitors": "No active monitors were found.",
+    "noExternalMonitors": "No external monitors were found.",
+    "applyingResolutions": "Applying the maximum available resolutions...",
+    "arrangingMonitors": "Arranging the monitors...",
+    "settingPrimary": "Setting the primary display...",
+    "configurationFailed": "Monitor configuration failed"
+  }
+}

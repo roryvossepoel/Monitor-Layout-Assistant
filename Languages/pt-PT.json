@@ -1,0 +1,30 @@
+{
+  "language": "pt-PT",
+  "displayName": "Português",
+  "strings": {
+    "positionQuestion": "Onde está o portátil relativamente aos monitores externos?",
+    "laptopOnLeft": "Portátil à esquerda",
+    "laptopOnRight": "Portátil à direita",
+    "beforeContinue": "Antes de continuar",
+    "physicalOrderInformation": "Os monitores externos são organizados pela ordem indicada pelo Windows. Esta ordem deve corresponder à posição física da esquerda para a direita. Os números das portas de uma estação de ancoragem podem não corresponder aos números dos ecrãs no Windows.",
+    "applyingLayout": "A aplicar a disposição",
+    "pleaseWait": "Aguarde...",
+    "preparingDisplays": "A preparar os monitores ligados.",
+    "layoutApplied": "Disposição aplicada",
+    "configurationSuccessful": "Os monitores foram configurados com sucesso.",
+    "done": "Concluir",
+    "builtInDisplay": "Ecrã integrado do portátil",
+    "multiMonitorToolMissing": "O MultiMonitorTool.exe é obrigatório, mas não foi encontrado.\n\nTransfira-o a partir do site oficial da NirSoft e coloque-o junto de MonitorLayoutAssistant.ps1, ou especifique a localização em config.json.",
+    "monitorInformationUnavailable": "Não foi possível obter informações sobre os monitores ligados.",
+    "noExternalTitle": "Nenhum monitor externo encontrado",
+    "noExternalMessage": "Ligue pelo menos um monitor externo e volte a iniciar o Monitor Layout Assistant.",
+    "switchingToExtended": "A mudar para o ambiente de trabalho expandido...",
+    "detectingMonitors": "A detetar monitores ligados...",
+    "noActiveMonitors": "Não foram encontrados monitores ativos.",
+    "noExternalMonitors": "Não foram encontrados monitores externos.",
+    "applyingResolutions": "A aplicar as resoluções máximas disponíveis...",
+    "arrangingMonitors": "A organizar os monitores...",
+    "settingPrimary": "A definir o monitor principal...",
+    "configurationFailed": "Falha na configuração dos monitores"
+  }
+}

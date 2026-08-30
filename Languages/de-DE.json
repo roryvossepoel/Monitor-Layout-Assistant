@@ -1,0 +1,30 @@
+{
+  "language": "de-DE",
+  "displayName": "Deutsch",
+  "strings": {
+    "positionQuestion": "Wo steht der Laptop im Verhältnis zu den externen Bildschirmen?",
+    "laptopOnLeft": "Laptop steht links",
+    "laptopOnRight": "Laptop steht rechts",
+    "beforeContinue": "Bevor Sie fortfahren",
+    "physicalOrderInformation": "Externe Bildschirme werden in der von Windows gemeldeten Reihenfolge angeordnet. Diese muss der physischen Anordnung von links nach rechts entsprechen. Anschlussnummern einer Dockingstation entsprechen nicht unbedingt den Windows-Bildschirmnummern.",
+    "applyingLayout": "Bildschirmanordnung wird angewendet",
+    "pleaseWait": "Bitte warten...",
+    "preparingDisplays": "Die angeschlossenen Bildschirme werden vorbereitet.",
+    "layoutApplied": "Bildschirmanordnung angewendet",
+    "configurationSuccessful": "Die Bildschirme wurden erfolgreich eingerichtet.",
+    "done": "Fertig",
+    "builtInDisplay": "Integrierter Laptopbildschirm",
+    "multiMonitorToolMissing": "MultiMonitorTool.exe ist erforderlich, wurde aber nicht gefunden.\n\nLaden Sie es von der offiziellen NirSoft-Website herunter und legen Sie es neben MonitorLayoutAssistant.ps1 ab, oder geben Sie den Speicherort in config.json an.",
+    "monitorInformationUnavailable": "Informationen zu den angeschlossenen Bildschirmen konnten nicht abgerufen werden.",
+    "noExternalTitle": "Keine externen Bildschirme gefunden",
+    "noExternalMessage": "Schließen Sie mindestens einen externen Bildschirm an und starten Sie Monitor Layout Assistant erneut.",
+    "switchingToExtended": "Erweiterter Desktop wird aktiviert...",
+    "detectingMonitors": "Angeschlossene Bildschirme werden erkannt...",
+    "noActiveMonitors": "Es wurden keine aktiven Bildschirme gefunden.",
+    "noExternalMonitors": "Es wurden keine externen Bildschirme gefunden.",
+    "applyingResolutions": "Maximal verfügbare Auflösungen werden angewendet...",
+    "arrangingMonitors": "Bildschirme werden angeordnet...",
+    "settingPrimary": "Hauptbildschirm wird festgelegt...",
+    "configurationFailed": "Bildschirmkonfiguration fehlgeschlagen"
+  }
+}

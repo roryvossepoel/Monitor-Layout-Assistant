@@ -18,7 +18,7 @@ $script:ButtonHoverColor = [System.Drawing.Color]::FromArgb(54, 101, 160)
 $script:ButtonPressedColor = [System.Drawing.Color]::FromArgb(29, 61, 99)
 $script:AccentColor = [System.Drawing.Color]::FromArgb(111, 168, 220)
 $script:ConfigurationPath = Join-Path $PSScriptRoot 'config.json'
-$script:LanguageCatalogPath = Join-Path $PSScriptRoot 'languages.json'
+$script:LanguageFolderPath = Join-Path $PSScriptRoot 'Languages'
 $script:MonitorListPath = Join-Path $env:TEMP (
     'MonitorLayoutAssistant-{0}.csv' -f [guid]::NewGuid().ToString('N')
 )
@@ -46,47 +46,47 @@ function Initialize-Localization {
         [Parameter(Mandatory)][object]$Configuration
     )
 
-    if (-not (Test-Path -LiteralPath $script:LanguageCatalogPath -PathType Leaf)) {
-        throw "The language catalog could not be found: $script:LanguageCatalogPath"
-    }
-
-    try {
-        $catalog = Get-Content -LiteralPath $script:LanguageCatalogPath -Raw |
-            ConvertFrom-Json
-    }
-    catch {
-        throw "The language catalog is invalid: $script:LanguageCatalogPath"
-    }
-
     $languageToResolve = $RequestedLanguage
     if ([string]::IsNullOrWhiteSpace($languageToResolve)) {
         $languageToResolve = [string]$Configuration.language
     }
     if ([string]::IsNullOrWhiteSpace($languageToResolve)) {
-        $languageToResolve =
-            [System.Globalization.CultureInfo]::CurrentUICulture.Name
+        $languageToResolve = 'en-US'
     }
 
-    $availableLanguages = @($catalog.languages.PSObject.Properties.Name)
-    $selectedLanguage = $availableLanguages |
-        Where-Object { $_ -ieq $languageToResolve } |
-        Select-Object -First 1
-
-    if ([string]::IsNullOrWhiteSpace($selectedLanguage)) {
-        $neutralLanguage = ($languageToResolve -split '-')[0]
-        $selectedLanguage = $availableLanguages |
-            Where-Object { ($_ -split '-')[0] -ieq $neutralLanguage } |
-            Select-Object -First 1
+    $fallbackPath = Join-Path $script:LanguageFolderPath 'en-US.json'
+    if (-not (Test-Path -LiteralPath $fallbackPath -PathType Leaf)) {
+        throw "The English language file could not be found: $fallbackPath"
     }
 
-    if ([string]::IsNullOrWhiteSpace($selectedLanguage)) {
-        $selectedLanguage = [string]$catalog.defaultLanguage
+    try {
+        $fallbackLanguage = Get-Content -LiteralPath $fallbackPath -Raw |
+            ConvertFrom-Json
+    }
+    catch {
+        throw "The English language file is invalid: $fallbackPath"
     }
 
-    $fallbackLanguage = [string]$catalog.defaultLanguage
-    $script:Text = $catalog.languages.$selectedLanguage.strings
-    $script:FallbackText = $catalog.languages.$fallbackLanguage.strings
-    $script:SelectedLanguage = $selectedLanguage
+    $languagePath = Join-Path $script:LanguageFolderPath (
+        '{0}.json' -f $languageToResolve
+    )
+
+    if (Test-Path -LiteralPath $languagePath -PathType Leaf) {
+        try {
+            $selectedLanguage = Get-Content -LiteralPath $languagePath -Raw |
+                ConvertFrom-Json
+        }
+        catch {
+            $selectedLanguage = $fallbackLanguage
+        }
+    }
+    else {
+        $selectedLanguage = $fallbackLanguage
+    }
+
+    $script:Text = $selectedLanguage.strings
+    $script:FallbackText = $fallbackLanguage.strings
+    $script:SelectedLanguage = [string]$selectedLanguage.language
 }
 
 function Get-LocalizedText {

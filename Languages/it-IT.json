@@ -1,0 +1,30 @@
+{
+  "language": "it-IT",
+  "displayName": "Italiano",
+  "strings": {
+    "positionQuestion": "Dove si trova il portatile rispetto ai monitor esterni?",
+    "laptopOnLeft": "Portatile a sinistra",
+    "laptopOnRight": "Portatile a destra",
+    "beforeContinue": "Prima di continuare",
+    "physicalOrderInformation": "I monitor esterni vengono disposti nell’ordine indicato da Windows. Questo deve corrispondere alla posizione fisica da sinistra a destra. I numeri delle porte di una docking station non corrispondono necessariamente ai numeri degli schermi di Windows.",
+    "applyingLayout": "Applicazione della disposizione",
+    "pleaseWait": "Attendere...",
+    "preparingDisplays": "Preparazione dei monitor collegati.",
+    "layoutApplied": "Disposizione applicata",
+    "configurationSuccessful": "I monitor sono stati configurati correttamente.",
+    "done": "Fine",
+    "builtInDisplay": "Schermo integrato del portatile",
+    "multiMonitorToolMissing": "MultiMonitorTool.exe è obbligatorio ma non è stato trovato.\n\nScaricarlo dal sito ufficiale di NirSoft e posizionarlo accanto a MonitorLayoutAssistant.ps1 oppure specificarne il percorso in config.json.",
+    "monitorInformationUnavailable": "Impossibile recuperare le informazioni sui monitor collegati.",
+    "noExternalTitle": "Nessun monitor esterno trovato",
+    "noExternalMessage": "Collegare almeno un monitor esterno e riavviare Monitor Layout Assistant.",
+    "switchingToExtended": "Passaggio al desktop esteso...",
+    "detectingMonitors": "Rilevamento dei monitor collegati...",
+    "noActiveMonitors": "Nessun monitor attivo trovato.",
+    "noExternalMonitors": "Nessun monitor esterno trovato.",
+    "applyingResolutions": "Applicazione delle risoluzioni massime disponibili...",
+    "arrangingMonitors": "Disposizione dei monitor...",
+    "settingPrimary": "Impostazione del monitor principale...",
+    "configurationFailed": "Configurazione dei monitor non riuscita"
+  }
+}

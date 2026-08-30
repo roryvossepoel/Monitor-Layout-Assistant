@@ -78,7 +78,7 @@ The `-MultiMonitorToolPath` script parameter can also override the configured lo
 
 ## Languages
 
-The interface language is selected automatically from the current user's Windows UI language. Exact locale matches are preferred. If an exact locale is unavailable, Monitor Layout Assistant uses the corresponding base language. For example, `de-AT` and `de-CH` use the included German translation. An unknown language falls back to English.
+The interface language is configured in `config.json`. English is used by default and as the fallback when the configured language file does not exist or cannot be read.
 
 Included languages:
 
@@ -92,9 +92,9 @@ Included languages:
 | `it-IT` | Italian |
 | `pt-PT` | Portuguese |
 
-All interface strings are stored in `languages.json` so translations can be reviewed or extended without changing the PowerShell script.
+Each translation is stored as a separate JSON file in the `Languages` folder, for example `Languages/en-US.json` and `Languages/nl-NL.json`. This keeps translations easy to review and extend without changing the PowerShell script.
 
-To force a language, set it in `config.json`:
+Set the language in `config.json`:
 
 ```json
 {
@@ -103,7 +103,7 @@ To force a language, set it in `config.json`:
 }
 ```
 
-An empty language value enables automatic selection. A language can also be forced for a single invocation:
+A language can be overridden for a single invocation:
 
 ```powershell
 .\MonitorLayoutAssistant.ps1 -Language "de-DE"
@@ -115,7 +115,7 @@ Or during installation:
 .\Install.ps1 -Language "fr-FR"
 ```
 
-The script parameter takes precedence over `config.json`. The configured language takes precedence over automatic Windows language detection.
+The script parameter takes precedence over `config.json`. Language selection is not derived from the Windows display language.
 
 ## Installation
 
@@ -132,7 +132,7 @@ Set-ExecutionPolicy -Scope Process Bypass
 .\Install.ps1
 ```
 
-The installer copies the application, language catalog and MultiMonitorTool to:
+The installer copies the application, language files and MultiMonitorTool to:
 
 ```text
 C:\Program Files\Monitor Layout Assistant
@@ -179,7 +179,7 @@ Place `MultiMonitorTool.exe` in the same directory or provide its location:
     -MultiMonitorToolPath "C:\Tools\NirSoft\MultiMonitorTool.exe"
 ```
 
-Keep `languages.json` in the same directory as `MonitorLayoutAssistant.ps1`.
+Keep the `Languages` folder in the same directory as `MonitorLayoutAssistant.ps1`.
 
 ## Uninstallation
 
