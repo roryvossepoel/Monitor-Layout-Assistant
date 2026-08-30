@@ -1,0 +1,172 @@
+# Monitor Layout Assistant
+
+Monitor Layout Assistant is a small Windows utility that arranges a laptop display and connected external monitors. The user only selects whether the laptop is physically positioned to the left or right of the external monitors.
+
+The application then:
+
+- switches Windows to extended desktop mode;
+- applies the maximum available resolution to each display;
+- positions all displays horizontally;
+- selects an external monitor as the primary display.
+
+The interface and configuration are intentionally simple. Monitor Layout Assistant is intended for standardized desks where external monitors are connected in a consistent order.
+
+## Supported layout
+
+The primary supported configuration is:
+
+- one active built-in laptop display;
+- one or two external monitors;
+- all monitors positioned in one horizontal row;
+- the laptop positioned completely to the left or right of the external monitors.
+
+The script can process more than two external monitors, but those configurations have not yet been designated as the primary tested scenario. Vertical layouts, stacked displays and a laptop positioned between external monitors are not supported.
+
+## Physical monitor order
+
+> [!IMPORTANT]
+> Monitor Layout Assistant cannot determine where a monitor is physically located. External monitors are arranged according to the display order reported by Windows.
+
+When using a docking station, connect the external monitors so that the order reported by Windows matches their physical left-to-right arrangement. A connector labelled `Display 1` or `Port 1` on a dock is not guaranteed to become `DISPLAY1` in Windows. Enumeration can vary by dock, graphics driver, firmware and connection method.
+
+Validate the monitor order with **Settings > System > Display > Identify** before deploying the tool broadly on a particular hardware combination.
+
+## Primary display selection
+
+Monitor Layout Assistant always selects an external monitor as the primary display:
+
+| Number of external monitors | Primary display |
+|---:|---|
+| 1 | The external monitor |
+| 2 | The left external monitor |
+| 3 | The center external monitor |
+| 4 | The second external monitor from the left |
+
+With an odd number of external monitors, the center external monitor becomes primary. With an even number, the left monitor of the two center displays becomes primary. The built-in laptop display is never selected as primary.
+
+This selection uses the display order reported by Windows, not the labels printed on docking station ports.
+
+## Requirements
+
+- Windows 10 or Windows 11
+- Windows PowerShell 5.1
+- An interactive user session
+- At least one external monitor
+- [MultiMonitorTool](https://www.nirsoft.net/utils/multi_monitor_tool.html)
+
+### MultiMonitorTool
+
+`MultiMonitorTool.exe` is mandatory and is not included in this repository. Download it from the official NirSoft website and assess it according to your organization's security requirements.
+
+By default, Monitor Layout Assistant looks for `MultiMonitorTool.exe` in the same directory as `MonitorLayoutAssistant.ps1`. A different location can be configured in `config.json`:
+
+```json
+{
+  "multiMonitorToolPath": "C:\\Tools\\NirSoft\\MultiMonitorTool.exe"
+}
+```
+
+Environment variables are supported, for example:
+
+```json
+{
+  "multiMonitorToolPath": "%ProgramFiles%\\NirSoft\\MultiMonitorTool.exe"
+}
+```
+
+The `-MultiMonitorToolPath` script parameter can also override the configured location for a single invocation.
+
+## Installation
+
+### Standard installation
+
+1. Download this repository or its release archive.
+2. Download MultiMonitorTool from [NirSoft](https://www.nirsoft.net/utils/multi_monitor_tool.html).
+3. Place `MultiMonitorTool.exe` next to `Install.ps1`.
+4. Run Windows PowerShell as administrator.
+5. Run:
+
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass
+.\Install.ps1
+```
+
+The installer copies the application and MultiMonitorTool to:
+
+```text
+C:\Program Files\Monitor Layout Assistant
+```
+
+It also creates a Start menu shortcut for all users.
+
+### Use an existing MultiMonitorTool location
+
+To reference an existing copy without placing it in the application directory:
+
+```powershell
+.\Install.ps1 -MultiMonitorToolPath "C:\Tools\NirSoft\MultiMonitorTool.exe"
+```
+
+The installer validates the path and writes it to `config.json`. It does not copy or modify the external executable.
+
+## Optional hidden PowerShell host
+
+Windows PowerShell normally displays a console window while the graphical application is running. This does not affect functionality.
+
+Administrators who want to suppress the console can assess and install [SeidChr/RunHiddenConsole](https://github.com/SeidChr/RunHiddenConsole) as `powershellw.exe`. The recommended location is next to Windows PowerShell:
+
+```text
+%SystemRoot%\System32\WindowsPowerShell\v1.0\powershellw.exe
+```
+
+That directory is normally part of the system `PATH`. During installation, Monitor Layout Assistant checks this exact location. If `powershellw.exe` exists, the Start menu shortcut uses it. Otherwise, the shortcut uses the native `powershell.exe` and the console remains visible.
+
+RunHiddenConsole is optional, is not included, and must be assessed separately before use.
+
+## Manual use
+
+Monitor Layout Assistant can also be run without installation:
+
+```powershell
+.\MonitorLayoutAssistant.ps1
+```
+
+Place `MultiMonitorTool.exe` in the same directory or provide its location:
+
+```powershell
+.\MonitorLayoutAssistant.ps1 `
+    -MultiMonitorToolPath "C:\Tools\NirSoft\MultiMonitorTool.exe"
+```
+
+## Uninstallation
+
+Run Windows PowerShell as administrator from a separate directory and execute:
+
+```powershell
+.\Uninstall.ps1
+```
+
+The uninstaller removes the application directory and Start menu shortcut. It never removes MultiMonitorTool from a separately configured external location and does not remove `powershellw.exe`.
+
+## Detection assumptions and limitations
+
+MultiMonitorTool obtains monitor names from EDID data. The current detection logic treats a display without a `Monitor Name` value as the built-in laptop display and a display with a value as external. This works with the hardware for which the tool was created, but some panels, docks, adapters or KVM switches may expose different information.
+
+Other limitations:
+
+- Display order is based on Windows `DISPLAYx` numbering, not physical position or dock port labels.
+- Maximum resolution is applied; scaling and refresh rate are not explicitly configured.
+- Existing display settings are not saved or restored.
+- The application minimizes open windows before showing the layout selection.
+- Only the first display detected as the built-in laptop panel is used.
+
+Test the application with each intended laptop, dock, graphics driver and monitor combination before production deployment.
+
+## Third-party software
+
+No third-party binaries are distributed with this project. See [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) for details.
+
+## License
+
+Monitor Layout Assistant is available under the [MIT License](LICENSE). Third-party software remains subject to its own license and distribution terms.
+
