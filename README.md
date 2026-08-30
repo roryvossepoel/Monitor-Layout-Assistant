@@ -76,6 +76,47 @@ Environment variables are supported, for example:
 
 The `-MultiMonitorToolPath` script parameter can also override the configured location for a single invocation.
 
+## Languages
+
+The interface language is selected automatically from the current user's Windows UI language. Exact locale matches are preferred. If an exact locale is unavailable, Monitor Layout Assistant uses the corresponding base language. For example, `de-AT` and `de-CH` use the included German translation. An unknown language falls back to English.
+
+Included languages:
+
+| Locale | Language |
+|---|---|
+| `en-US` | English |
+| `nl-NL` | Dutch |
+| `de-DE` | German |
+| `fr-FR` | French |
+| `es-ES` | Spanish |
+| `it-IT` | Italian |
+| `pt-PT` | Portuguese |
+
+All interface strings are stored in `languages.json` so translations can be reviewed or extended without changing the PowerShell script.
+
+To force a language, set it in `config.json`:
+
+```json
+{
+  "multiMonitorToolPath": "",
+  "language": "nl-NL"
+}
+```
+
+An empty language value enables automatic selection. A language can also be forced for a single invocation:
+
+```powershell
+.\MonitorLayoutAssistant.ps1 -Language "de-DE"
+```
+
+Or during installation:
+
+```powershell
+.\Install.ps1 -Language "fr-FR"
+```
+
+The script parameter takes precedence over `config.json`. The configured language takes precedence over automatic Windows language detection.
+
 ## Installation
 
 ### Standard installation
@@ -91,7 +132,7 @@ Set-ExecutionPolicy -Scope Process Bypass
 .\Install.ps1
 ```
 
-The installer copies the application and MultiMonitorTool to:
+The installer copies the application, language catalog and MultiMonitorTool to:
 
 ```text
 C:\Program Files\Monitor Layout Assistant
@@ -138,6 +179,8 @@ Place `MultiMonitorTool.exe` in the same directory or provide its location:
     -MultiMonitorToolPath "C:\Tools\NirSoft\MultiMonitorTool.exe"
 ```
 
+Keep `languages.json` in the same directory as `MonitorLayoutAssistant.ps1`.
+
 ## Uninstallation
 
 Run Windows PowerShell as administrator from a separate directory and execute:
@@ -169,4 +212,3 @@ No third-party binaries are distributed with this project. See [THIRD-PARTY-NOTI
 ## License
 
 Monitor Layout Assistant is available under the [MIT License](LICENSE). Third-party software remains subject to its own license and distribution terms.
-

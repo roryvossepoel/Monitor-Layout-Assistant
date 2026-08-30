@@ -2,7 +2,8 @@
 
 [CmdletBinding()]
 param(
-    [string]$MultiMonitorToolPath
+    [string]$MultiMonitorToolPath,
+    [string]$Language
 )
 
 Add-Type -AssemblyName System.Windows.Forms
@@ -17,9 +18,98 @@ $script:ButtonHoverColor = [System.Drawing.Color]::FromArgb(54, 101, 160)
 $script:ButtonPressedColor = [System.Drawing.Color]::FromArgb(29, 61, 99)
 $script:AccentColor = [System.Drawing.Color]::FromArgb(111, 168, 220)
 $script:ConfigurationPath = Join-Path $PSScriptRoot 'config.json'
+$script:LanguageCatalogPath = Join-Path $PSScriptRoot 'languages.json'
 $script:MonitorListPath = Join-Path $env:TEMP (
     'MonitorLayoutAssistant-{0}.csv' -f [guid]::NewGuid().ToString('N')
 )
+
+function Import-ApplicationConfiguration {
+    if (-not (Test-Path -LiteralPath $script:ConfigurationPath -PathType Leaf)) {
+        return [PSCustomObject]@{
+            multiMonitorToolPath = ''
+            language             = ''
+        }
+    }
+
+    try {
+        return Get-Content -LiteralPath $script:ConfigurationPath -Raw |
+            ConvertFrom-Json
+    }
+    catch {
+        throw "The configuration file is invalid: $script:ConfigurationPath"
+    }
+}
+
+function Initialize-Localization {
+    param(
+        [string]$RequestedLanguage,
+        [Parameter(Mandatory)][object]$Configuration
+    )
+
+    if (-not (Test-Path -LiteralPath $script:LanguageCatalogPath -PathType Leaf)) {
+        throw "The language catalog could not be found: $script:LanguageCatalogPath"
+    }
+
+    try {
+        $catalog = Get-Content -LiteralPath $script:LanguageCatalogPath -Raw |
+            ConvertFrom-Json
+    }
+    catch {
+        throw "The language catalog is invalid: $script:LanguageCatalogPath"
+    }
+
+    $languageToResolve = $RequestedLanguage
+    if ([string]::IsNullOrWhiteSpace($languageToResolve)) {
+        $languageToResolve = [string]$Configuration.language
+    }
+    if ([string]::IsNullOrWhiteSpace($languageToResolve)) {
+        $languageToResolve =
+            [System.Globalization.CultureInfo]::CurrentUICulture.Name
+    }
+
+    $availableLanguages = @($catalog.languages.PSObject.Properties.Name)
+    $selectedLanguage = $availableLanguages |
+        Where-Object { $_ -ieq $languageToResolve } |
+        Select-Object -First 1
+
+    if ([string]::IsNullOrWhiteSpace($selectedLanguage)) {
+        $neutralLanguage = ($languageToResolve -split '-')[0]
+        $selectedLanguage = $availableLanguages |
+            Where-Object { ($_ -split '-')[0] -ieq $neutralLanguage } |
+            Select-Object -First 1
+    }
+
+    if ([string]::IsNullOrWhiteSpace($selectedLanguage)) {
+        $selectedLanguage = [string]$catalog.defaultLanguage
+    }
+
+    $fallbackLanguage = [string]$catalog.defaultLanguage
+    $script:Text = $catalog.languages.$selectedLanguage.strings
+    $script:FallbackText = $catalog.languages.$fallbackLanguage.strings
+    $script:SelectedLanguage = $selectedLanguage
+}
+
+function Get-LocalizedText {
+    param(
+        [Parameter(Mandatory)][string]$Key,
+        [object[]]$ArgumentList
+    )
+
+    $property = $script:Text.PSObject.Properties[$Key]
+    if ($null -eq $property) {
+        $property = $script:FallbackText.PSObject.Properties[$Key]
+    }
+    if ($null -eq $property) {
+        throw "Missing localization key: $Key"
+    }
+
+    $value = [string]$property.Value
+    if ($null -ne $ArgumentList -and $ArgumentList.Count -gt 0) {
+        return ($value -f $ArgumentList)
+    }
+
+    return $value
+}
 
 function Write-ApplicationLog {
     param([Parameter(Mandatory)][string]$Message)
@@ -44,7 +134,10 @@ function Show-ApplicationMessage {
 }
 
 function Resolve-MultiMonitorToolPath {
-    param([string]$ExplicitPath)
+    param(
+        [string]$ExplicitPath,
+        [Parameter(Mandatory)][object]$Configuration
+    )
 
     $candidates = [System.Collections.Generic.List[string]]::new()
 
@@ -52,24 +145,14 @@ function Resolve-MultiMonitorToolPath {
         $candidates.Add([Environment]::ExpandEnvironmentVariables($ExplicitPath))
     }
 
-    if (Test-Path -LiteralPath $script:ConfigurationPath) {
-        try {
-            $configuration = Get-Content -LiteralPath $script:ConfigurationPath -Raw |
-                ConvertFrom-Json
-
-            if (-not [string]::IsNullOrWhiteSpace(
-                    [string]$configuration.multiMonitorToolPath
-                )) {
-                $candidates.Add(
-                    [Environment]::ExpandEnvironmentVariables(
-                        [string]$configuration.multiMonitorToolPath
-                    )
-                )
-            }
-        }
-        catch {
-            throw "The configuration file is invalid: $script:ConfigurationPath"
-        }
+    if (-not [string]::IsNullOrWhiteSpace(
+            [string]$Configuration.multiMonitorToolPath
+        )) {
+        $candidates.Add(
+            [Environment]::ExpandEnvironmentVariables(
+                [string]$Configuration.multiMonitorToolPath
+            )
+        )
     }
 
     $candidates.Add((Join-Path $PSScriptRoot 'MultiMonitorTool.exe'))
@@ -80,11 +163,7 @@ function Resolve-MultiMonitorToolPath {
         }
     }
 
-    throw @"
-MultiMonitorTool.exe is required but could not be found.
-
-Download it from the official NirSoft website and place it next to MonitorLayoutAssistant.ps1, or specify its location in config.json.
-"@
+    throw (Get-LocalizedText -Key 'multiMonitorToolMissing')
 }
 
 function Export-MonitorData {
@@ -98,7 +177,7 @@ function Export-MonitorData {
     Start-Sleep -Milliseconds 750
 
     if (-not (Test-Path -LiteralPath $OutputPath -PathType Leaf)) {
-        throw 'Connected display information could not be retrieved.'
+        throw (Get-LocalizedText -Key 'monitorInformationUnavailable')
     }
 
     return @(Import-Csv -LiteralPath $OutputPath)
@@ -264,7 +343,7 @@ function Show-MonitorPositionDialog {
     [void](New-HeaderPanel -Form $form -Title $script:ApplicationName -Width 760)
 
     $question = New-Object System.Windows.Forms.Label
-    $question.Text = 'Where is the laptop positioned relative to the external monitors?'
+    $question.Text = Get-LocalizedText -Key 'positionQuestion'
     $question.Size = New-Object System.Drawing.Size(680, 34)
     $question.Location = New-Object System.Drawing.Point(40, 122)
     $question.Font = New-Object System.Drawing.Font('Segoe UI Semibold', 14)
@@ -272,11 +351,11 @@ function Show-MonitorPositionDialog {
     $question.TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
     $form.Controls.Add($question)
 
-    $leftCard = New-ChoiceCard -Title 'Laptop on the left' -Value 'left'
+    $leftCard = New-ChoiceCard -Title (Get-LocalizedText -Key 'laptopOnLeft') -Value 'left'
     $leftCard.Location = New-Object System.Drawing.Point(64, 184)
     $form.Controls.Add($leftCard)
 
-    $rightCard = New-ChoiceCard -Title 'Laptop on the right' -Value 'right'
+    $rightCard = New-ChoiceCard -Title (Get-LocalizedText -Key 'laptopOnRight') -Value 'right'
     $rightCard.Location = New-Object System.Drawing.Point(404, 184)
     $form.Controls.Add($rightCard)
 
@@ -291,14 +370,14 @@ function Show-MonitorPositionDialog {
     $accentBar.BackColor = $script:PrimaryColor
 
     $infoTitle = New-Object System.Windows.Forms.Label
-    $infoTitle.Text = 'Before you continue'
+    $infoTitle.Text = Get-LocalizedText -Key 'beforeContinue'
     $infoTitle.Size = New-Object System.Drawing.Size(575, 23)
     $infoTitle.Location = New-Object System.Drawing.Point(24, 13)
     $infoTitle.Font = New-Object System.Drawing.Font('Segoe UI Semibold', 10.5)
     $infoTitle.ForeColor = [System.Drawing.Color]::FromArgb(32, 32, 32)
 
     $infoText = New-Object System.Windows.Forms.Label
-    $infoText.Text = 'External monitors are arranged in the order reported by Windows. Ensure this order matches their physical left-to-right position. Docking station port labels do not necessarily match Windows display numbers.'
+    $infoText.Text = Get-LocalizedText -Key 'physicalOrderInformation'
     $infoText.Size = New-Object System.Drawing.Size(575, 78)
     $infoText.Location = New-Object System.Drawing.Point(24, 43)
     $infoText.Font = New-Object System.Drawing.Font('Segoe UI', 9.5)
@@ -317,11 +396,11 @@ function Show-ProgressDialog {
     $form.ClientSize = New-Object System.Drawing.Size(560, 260)
     $form.ControlBox = $false
     Set-FormDefaults -Form $form
-    [void](New-HeaderPanel -Form $form -Title 'Applying monitor layout' -Width 560 -Height 84)
+    [void](New-HeaderPanel -Form $form -Title (Get-LocalizedText -Key 'applyingLayout') -Width 560 -Height 84)
 
     $statusTitle = New-Object System.Windows.Forms.Label
     $statusTitle.Name = 'StatusTitle'
-    $statusTitle.Text = 'Please wait...'
+    $statusTitle.Text = Get-LocalizedText -Key 'pleaseWait'
     $statusTitle.Size = New-Object System.Drawing.Size(480, 30)
     $statusTitle.Location = New-Object System.Drawing.Point(40, 112)
     $statusTitle.Font = New-Object System.Drawing.Font('Segoe UI Semibold', 12)
@@ -330,7 +409,7 @@ function Show-ProgressDialog {
 
     $statusText = New-Object System.Windows.Forms.Label
     $statusText.Name = 'StatusText'
-    $statusText.Text = 'Preparing the connected displays.'
+    $statusText.Text = Get-LocalizedText -Key 'preparingDisplays'
     $statusText.Size = New-Object System.Drawing.Size(480, 28)
     $statusText.Location = New-Object System.Drawing.Point(40, 148)
     $statusText.ForeColor = [System.Drawing.Color]::FromArgb(82, 82, 82)
@@ -369,17 +448,17 @@ function Show-ProgressCompleted {
         Where-Object { $null -ne $_ } |
         Select-Object -First 1
 
-    $headerTitle.Text = 'Monitor layout applied'
+    $headerTitle.Text = Get-LocalizedText -Key 'layoutApplied'
     $Form.Controls['StatusTitle'].Text = [char]0x2714
     $Form.Controls['StatusTitle'].Font = New-Object System.Drawing.Font(
         'Segoe UI Symbol', 24
     )
     $Form.Controls['StatusTitle'].ForeColor = $script:PrimaryColor
-    $Form.Controls['StatusText'].Text = 'The monitors were configured successfully.'
+    $Form.Controls['StatusText'].Text = Get-LocalizedText -Key 'configurationSuccessful'
     $Form.Controls['ProgressBar'].Visible = $false
 
     $closeButton = New-Object System.Windows.Forms.Button
-    $closeButton.Text = 'Done'
+    $closeButton.Text = Get-LocalizedText -Key 'done'
     $closeButton.Size = New-Object System.Drawing.Size(120, 34)
     $closeButton.Location = New-Object System.Drawing.Point(220, 198)
     $closeButton.BackColor = [System.Drawing.Color]::White
@@ -428,7 +507,7 @@ function ConvertTo-MonitorObjects {
         $isLaptop = [string]::IsNullOrWhiteSpace($monitorName)
 
         $displayName = if ($isLaptop) {
-            'Built-in laptop display'
+            Get-LocalizedText -Key 'builtInDisplay'
         }
         elseif (-not [string]::IsNullOrWhiteSpace($monitorSerial)) {
             '{0} ({1})' -f $monitorName, $monitorSerial
@@ -465,14 +544,18 @@ function ConvertTo-MonitorObjects {
 $progressForm = $null
 
 try {
+    $configuration = Import-ApplicationConfiguration
+    Initialize-Localization -RequestedLanguage $Language -Configuration $configuration
+
     Write-ApplicationLog 'Starting Monitor Layout Assistant.'
-    $toolPath = Resolve-MultiMonitorToolPath -ExplicitPath $MultiMonitorToolPath
+    Write-ApplicationLog "Selected language: $script:SelectedLanguage"
+    $toolPath = Resolve-MultiMonitorToolPath -ExplicitPath $MultiMonitorToolPath -Configuration $configuration
     Write-ApplicationLog "Using MultiMonitorTool: $toolPath"
 
     if (-not (Test-ExternalMonitorConnected -ToolPath $toolPath)) {
         Show-ApplicationMessage `
-            -Title 'No external monitors found' `
-            -Message 'Connect at least one external monitor and start Monitor Layout Assistant again.'
+            -Title (Get-LocalizedText -Key 'noExternalTitle') `
+            -Message (Get-LocalizedText -Key 'noExternalMessage')
         exit 0
     }
 
@@ -487,19 +570,19 @@ try {
 
     Write-ApplicationLog "Selected laptop position: $side."
     $progressForm = Show-ProgressDialog
-    Update-ProgressStatus -Form $progressForm -Text 'Switching to extended desktop mode...'
+    Update-ProgressStatus -Form $progressForm -Text (Get-LocalizedText -Key 'switchingToExtended')
 
     & "$env:WINDIR\System32\DisplaySwitch.exe" /extend
     Start-Sleep -Seconds 3
 
-    Update-ProgressStatus -Form $progressForm -Text 'Detecting connected monitors...'
+    Update-ProgressStatus -Form $progressForm -Text (Get-LocalizedText -Key 'detectingMonitors')
     $rawMonitors = Export-MonitorData `
         -ToolPath $toolPath `
         -OutputPath $script:MonitorListPath
 
     $monitors = ConvertTo-MonitorObjects -RawMonitors $rawMonitors
     if ($monitors.Count -eq 0) {
-        throw 'No active monitors were found.'
+        throw (Get-LocalizedText -Key 'noActiveMonitors')
     }
 
     $laptopMonitor = $monitors |
@@ -513,7 +596,7 @@ try {
     )
 
     if ($externalMonitors.Count -eq 0) {
-        throw 'No external monitors were found.'
+        throw (Get-LocalizedText -Key 'noExternalMonitors')
     }
 
     if ($side -eq 'left') {
@@ -530,7 +613,7 @@ try {
         Write-Host (' - {0}: {1}' -f $monitor.Name, $monitor.DisplayName)
     }
 
-    Update-ProgressStatus -Form $progressForm -Text 'Applying the maximum available resolutions...'
+    Update-ProgressStatus -Form $progressForm -Text (Get-LocalizedText -Key 'applyingResolutions')
     foreach ($monitor in $sortedMonitors) {
         & $toolPath /SetMax $monitor.Name
     }
@@ -554,7 +637,7 @@ try {
         }
     }
 
-    Update-ProgressStatus -Form $progressForm -Text 'Arranging the monitors...'
+    Update-ProgressStatus -Form $progressForm -Text (Get-LocalizedText -Key 'arrangingMonitors')
     & $toolPath @monitorArguments
     Start-Sleep -Seconds 3
 
@@ -563,7 +646,7 @@ try {
     $primaryIndex = [math]::Floor(($externalMonitors.Count - 1) / 2)
     $primaryMonitor = $externalMonitors[$primaryIndex]
 
-    Update-ProgressStatus -Form $progressForm -Text 'Setting the primary display...'
+    Update-ProgressStatus -Form $progressForm -Text (Get-LocalizedText -Key 'settingPrimary')
     Write-ApplicationLog "Setting primary display to $($primaryMonitor.DisplayName)."
     & $toolPath /SetPrimary $primaryMonitor.Name
     & "$env:WINDIR\System32\DisplaySwitch.exe" /extend
@@ -578,8 +661,15 @@ catch {
     $progressForm = $null
     Write-Host "Error: $($_.Exception.Message)" -ForegroundColor Red
 
+    $errorTitle = if ($null -ne $script:Text) {
+        Get-LocalizedText -Key 'configurationFailed'
+    }
+    else {
+        'Monitor configuration failed'
+    }
+
     Show-ApplicationMessage `
-        -Title 'Monitor configuration failed' `
+        -Title $errorTitle `
         -Message $_.Exception.Message `
         -Icon ([System.Windows.Forms.MessageBoxIcon]::Error)
 

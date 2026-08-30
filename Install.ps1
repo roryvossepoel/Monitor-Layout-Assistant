@@ -4,12 +4,14 @@
 [CmdletBinding()]
 param(
     [string]$InstallPath = (Join-Path $env:ProgramFiles 'Monitor Layout Assistant'),
-    [string]$MultiMonitorToolPath
+    [string]$MultiMonitorToolPath,
+    [string]$Language = ''
 )
 
 $ErrorActionPreference = 'Stop'
 $applicationName = 'Monitor Layout Assistant'
 $sourceScript = Join-Path $PSScriptRoot 'MonitorLayoutAssistant.ps1'
+$sourceLanguages = Join-Path $PSScriptRoot 'languages.json'
 $startMenuPath = Join-Path $env:ProgramData 'Microsoft\Windows\Start Menu\Programs'
 $shortcutPath = Join-Path $startMenuPath "$applicationName.lnk"
 $recommendedPowerShellW = Join-Path $env:SystemRoot (
@@ -21,6 +23,10 @@ $nativePowerShell = Join-Path $env:SystemRoot (
 
 if (-not (Test-Path -LiteralPath $sourceScript -PathType Leaf)) {
     throw "MonitorLayoutAssistant.ps1 was not found next to Install.ps1."
+}
+
+if (-not (Test-Path -LiteralPath $sourceLanguages -PathType Leaf)) {
+    throw "languages.json was not found next to Install.ps1."
 }
 
 $sourceMultiMonitorTool = $null
@@ -47,6 +53,7 @@ Download it from https://www.nirsoft.net/utils/multi_monitor_tool.html and place
 
 New-Item -ItemType Directory -Path $InstallPath -Force | Out-Null
 Copy-Item -LiteralPath $sourceScript -Destination $InstallPath -Force
+Copy-Item -LiteralPath $sourceLanguages -Destination $InstallPath -Force
 
 if ($null -ne $sourceMultiMonitorTool) {
     Copy-Item -LiteralPath $sourceMultiMonitorTool -Destination $InstallPath -Force
@@ -54,6 +61,7 @@ if ($null -ne $sourceMultiMonitorTool) {
 
 $configuration = [ordered]@{
     multiMonitorToolPath = $configuredMultiMonitorToolPath
+    language             = $Language
 }
 
 $configuration |
