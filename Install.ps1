@@ -11,6 +11,7 @@ $ErrorActionPreference = 'Stop'
 $applicationName = 'Monitor Layout Assistant'
 $sourceScript = Join-Path $PSScriptRoot 'MonitorLayoutAssistant.ps1'
 $sourceLanguages = Join-Path $PSScriptRoot 'Languages'
+$sourceAssets = Join-Path $PSScriptRoot 'Assets'
 $startMenuPath = Join-Path $env:ProgramData 'Microsoft\Windows\Start Menu\Programs'
 $shortcutPath = Join-Path $startMenuPath "$applicationName.lnk"
 $recommendedPowerShellW = Join-Path $env:SystemRoot (
@@ -26,6 +27,10 @@ if (-not (Test-Path -LiteralPath $sourceScript -PathType Leaf)) {
 
 if (-not (Test-Path -LiteralPath $sourceLanguages -PathType Container)) {
     throw "The Languages folder was not found next to Install.ps1."
+}
+
+if (-not (Test-Path -LiteralPath $sourceAssets -PathType Container)) {
+    throw "The Assets folder was not found next to Install.ps1."
 }
 
 $sourceMultiMonitorTool = $null
@@ -53,6 +58,7 @@ Download it from https://www.nirsoft.net/utils/multi_monitor_tool.html and place
 New-Item -ItemType Directory -Path $InstallPath -Force | Out-Null
 Copy-Item -LiteralPath $sourceScript -Destination $InstallPath -Force
 Copy-Item -LiteralPath $sourceLanguages -Destination $InstallPath -Recurse -Force
+Copy-Item -LiteralPath $sourceAssets -Destination $InstallPath -Recurse -Force
 
 if ($null -ne $sourceMultiMonitorTool) {
     Copy-Item -LiteralPath $sourceMultiMonitorTool -Destination $InstallPath -Force
@@ -81,6 +87,7 @@ $shortcut.TargetPath = $powerShellHost
 $shortcut.Arguments = '-NoProfile -ExecutionPolicy Bypass -File "{0}"' -f $installedScript
 $shortcut.WorkingDirectory = $InstallPath
 $shortcut.Description = $applicationName
+$shortcut.IconLocation = Join-Path $InstallPath 'Assets\MonitorLayoutAssistant.ico'
 $shortcut.Save()
 
 Write-Host "$applicationName was installed successfully." -ForegroundColor Green

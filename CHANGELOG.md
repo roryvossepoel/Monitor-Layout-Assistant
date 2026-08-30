@@ -15,3 +15,4 @@ All notable changes to this project will be documented in this file.
 - Language selection through separate JSON language files with English fallback.
 - English, Dutch, German, French, Spanish, Italian and Portuguese translations.
 - Language selection through `config.json`.
+- Application icon for the interface and Start menu shortcut.

@@ -120,7 +120,7 @@ Set-ExecutionPolicy -Scope Process Bypass
 .\Install.ps1
 ```
 
-The installer copies the application, language files and MultiMonitorTool to:
+The installer copies the application, language files, icon assets and MultiMonitorTool to:
 
 ```text
 C:\Program Files\Monitor Layout Assistant

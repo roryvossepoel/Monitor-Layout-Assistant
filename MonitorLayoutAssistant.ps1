@@ -18,6 +18,7 @@ $script:ButtonPressedColor = [System.Drawing.Color]::FromArgb(29, 61, 99)
 $script:AccentColor = [System.Drawing.Color]::FromArgb(111, 168, 220)
 $script:ConfigurationPath = Join-Path $PSScriptRoot 'config.json'
 $script:LanguageFolderPath = Join-Path $PSScriptRoot 'Languages'
+$script:IconPath = Join-Path $PSScriptRoot 'Assets\MonitorLayoutAssistant.ico'
 $script:MonitorListPath = Join-Path $env:TEMP (
     'MonitorLayoutAssistant-{0}.csv' -f [guid]::NewGuid().ToString('N')
 )
@@ -212,7 +213,17 @@ function Set-FormDefaults {
     $Form.MaximizeBox = $false
     $Form.MinimizeBox = $false
     $Form.ShowIcon = $true
-    $Form.Icon = [System.Drawing.SystemIcons]::Application
+    if (Test-Path -LiteralPath $script:IconPath -PathType Leaf) {
+        try {
+            $Form.Icon = New-Object System.Drawing.Icon($script:IconPath)
+        }
+        catch {
+            $Form.Icon = [System.Drawing.SystemIcons]::Application
+        }
+    }
+    else {
+        $Form.Icon = [System.Drawing.SystemIcons]::Application
+    }
     $Form.TopMost = $true
     $Form.BackColor = [System.Drawing.Color]::White
     $Form.Font = New-Object System.Drawing.Font('Segoe UI', 10)
