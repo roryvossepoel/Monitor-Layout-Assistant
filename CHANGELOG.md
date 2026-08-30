@@ -14,4 +14,4 @@ All notable changes to this project will be documented in this file.
 - Uninstaller and third-party dependency documentation.
 - Language selection through separate JSON language files with English fallback.
 - English, Dutch, German, French, Spanish, Italian and Portuguese translations.
-- Forced language selection through configuration, script parameter or installer.
+- Language selection through `config.json`.

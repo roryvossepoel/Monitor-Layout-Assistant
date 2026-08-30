@@ -4,8 +4,7 @@
 [CmdletBinding()]
 param(
     [string]$InstallPath = (Join-Path $env:ProgramFiles 'Monitor Layout Assistant'),
-    [string]$MultiMonitorToolPath,
-    [string]$Language = 'en-US'
+    [string]$MultiMonitorToolPath
 )
 
 $ErrorActionPreference = 'Stop'
@@ -61,7 +60,7 @@ if ($null -ne $sourceMultiMonitorTool) {
 
 $configuration = [ordered]@{
     multiMonitorToolPath = $configuredMultiMonitorToolPath
-    language             = $Language
+    language             = 'en-US'
 }
 
 $configuration |

@@ -2,8 +2,7 @@
 
 [CmdletBinding()]
 param(
-    [string]$MultiMonitorToolPath,
-    [string]$Language
+    [string]$MultiMonitorToolPath
 )
 
 Add-Type -AssemblyName System.Windows.Forms
@@ -41,15 +40,9 @@ function Import-ApplicationConfiguration {
 }
 
 function Initialize-Localization {
-    param(
-        [string]$RequestedLanguage,
-        [Parameter(Mandatory)][object]$Configuration
-    )
+    param([Parameter(Mandatory)][object]$Configuration)
 
-    $languageToResolve = $RequestedLanguage
-    if ([string]::IsNullOrWhiteSpace($languageToResolve)) {
-        $languageToResolve = [string]$Configuration.language
-    }
+    $languageToResolve = [string]$Configuration.language
     if ([string]::IsNullOrWhiteSpace($languageToResolve)) {
         $languageToResolve = 'en-US'
     }
@@ -545,7 +538,7 @@ $progressForm = $null
 
 try {
     $configuration = Import-ApplicationConfiguration
-    Initialize-Localization -RequestedLanguage $Language -Configuration $configuration
+    Initialize-Localization -Configuration $configuration
 
     Write-ApplicationLog 'Starting Monitor Layout Assistant.'
     Write-ApplicationLog "Selected language: $script:SelectedLanguage"

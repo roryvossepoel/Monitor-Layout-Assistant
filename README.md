@@ -103,19 +103,7 @@ Set the language in `config.json`:
 }
 ```
 
-A language can be overridden for a single invocation:
-
-```powershell
-.\MonitorLayoutAssistant.ps1 -Language "de-DE"
-```
-
-Or during installation:
-
-```powershell
-.\Install.ps1 -Language "fr-FR"
-```
-
-The script parameter takes precedence over `config.json`. Language selection is not derived from the Windows display language.
+Language selection is not derived from the Windows display language. Change the `language` value in `config.json` whenever another included translation should be used.
 
 ## Installation
 
