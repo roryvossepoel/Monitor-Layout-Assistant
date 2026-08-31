@@ -64,57 +64,38 @@ if ($null -ne $sourceMultiMonitorTool) {
     Copy-Item -LiteralPath $sourceMultiMonitorTool -Destination $InstallPath -Force
 }
 
-$installedConfigurationPath = Join-Path $InstallPath 'config.json'
-$existingConfiguration = $null
-if (Test-Path -LiteralPath $installedConfigurationPath -PathType Leaf) {
-    try {
-        $existingConfiguration = Get-Content `
-            -LiteralPath $installedConfigurationPath `
-            -Raw | ConvertFrom-Json
-    }
-    catch {
-        Write-Warning 'The existing config.json is invalid and will be replaced.'
-    }
-}
-
-$theme = [ordered]@{
-    primary       = '#2563A5'
-    choice        = '#FFFFFF'
-    choiceText    = '#2563A5'
-    choiceHover   = '#EFF6FF'
-    choicePressed = '#DBEAFE'
-    accent        = '#93C5FD'
-    window        = '#FFFFFF'
-    information   = '#F4F7FA'
-    primaryText   = '#202020'
-    secondaryText = '#525252'
-    headerText    = '#FFFFFF'
-    controlBorder = '#BECAD5'
-}
-
-if ($null -ne $existingConfiguration.theme) {
-    foreach ($key in @($theme.Keys)) {
-        $property = $existingConfiguration.theme.PSObject.Properties[$key]
-        if ($null -ne $property) {
-            $theme[$key] = [string]$property.Value
+$configuration = [ordered]@{
+    multiMonitorToolPath = $configuredMultiMonitorToolPath
+    language             = 'en-US'
+    theme                = [ordered]@{
+        primary     = '#2563A5'
+        window      = '#FFFFFF'
+        headerText  = '#FFFFFF'
+        text        = [ordered]@{
+            primary   = '#202020'
+            secondary = '#525252'
+        }
+        choice      = [ordered]@{
+            background = '#F1F5F9'
+            foreground = '#174F86'
+            hover      = '#E2ECF7'
+            pressed    = '#D4E3F3'
+            border     = '#D6E2F0'
+            borderSize = 0
+        }
+        information = [ordered]@{
+            background = '#F7F7F7'
+            accent     = '#9AA9B8'
+        }
+        controls    = [ordered]@{
+            border = '#BECAD5'
         }
     }
 }
 
-$configuredLanguage = 'en-US'
-if (-not [string]::IsNullOrWhiteSpace([string]$existingConfiguration.language)) {
-    $configuredLanguage = [string]$existingConfiguration.language
-}
-
-$configuration = [ordered]@{
-    multiMonitorToolPath = $configuredMultiMonitorToolPath
-    language             = $configuredLanguage
-    theme                = $theme
-}
-
 $configuration |
-    ConvertTo-Json -Depth 3 |
-    Set-Content -LiteralPath $installedConfigurationPath -Encoding UTF8
+    ConvertTo-Json -Depth 5 |
+    Set-Content -LiteralPath (Join-Path $InstallPath 'config.json') -Encoding UTF8
 
 $hiddenPowerShellAvailable = Test-Path `
     -LiteralPath $recommendedPowerShellW `
