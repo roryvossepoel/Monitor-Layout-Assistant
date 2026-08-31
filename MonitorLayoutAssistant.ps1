@@ -7,21 +7,37 @@ param(
 
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
+Add-Type @'
+using System.Runtime.InteropServices;
+
+public static class MonitorLayoutAssistantTaskbar
+{
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+    public static extern int SetCurrentProcessExplicitAppUserModelID(string appID);
+}
+'@
 
 $ErrorActionPreference = 'Stop'
 
 $script:ApplicationName = 'Monitor Layout Assistant'
 $script:ApplicationVersion = '0.1.0'
-$script:PrimaryColor = [System.Drawing.Color]::FromArgb(37, 99, 165)
-$script:ButtonColor = [System.Drawing.Color]::FromArgb(241, 245, 249)
-$script:ButtonTextColor = [System.Drawing.Color]::FromArgb(23, 79, 134)
-$script:ButtonHoverColor = [System.Drawing.Color]::FromArgb(226, 236, 247)
-$script:ButtonPressedColor = [System.Drawing.Color]::FromArgb(212, 227, 243)
-$script:ButtonBorderColor = [System.Drawing.Color]::FromArgb(214, 226, 240)
+$script:ApplicationUserModelId = 'MonitorLayoutAssistant.Application'
+$script:TaskbarIdentityResult = [MonitorLayoutAssistantTaskbar]::SetCurrentProcessExplicitAppUserModelID(
+    $script:ApplicationUserModelId
+)
+$script:PrimaryColor = [System.Drawing.Color]::FromArgb(36, 59, 83)
+$script:ButtonColor = [System.Drawing.Color]::FromArgb(220, 236, 248)
+$script:ButtonTextColor = [System.Drawing.Color]::FromArgb(23, 79, 122)
+$script:ButtonHoverColor = [System.Drawing.Color]::FromArgb(201, 225, 243)
+$script:ButtonPressedColor = [System.Drawing.Color]::FromArgb(181, 213, 236)
+$script:ButtonBorderColor = [System.Drawing.Color]::FromArgb(220, 236, 248)
 $script:ButtonBorderSize = 0
-$script:AccentColor = [System.Drawing.Color]::FromArgb(154, 169, 184)
+$script:ButtonArrowSize = 26
+$script:AccentColor = [System.Drawing.Color]::FromArgb(217, 154, 0)
+$script:InfoBorderSize = 1
+$script:InfoCornerRadius = 8
 $script:WindowColor = [System.Drawing.Color]::White
-$script:InfoColor = [System.Drawing.Color]::FromArgb(247, 247, 247)
+$script:InfoColor = [System.Drawing.Color]::FromArgb(255, 248, 225)
 $script:PrimaryTextColor = [System.Drawing.Color]::FromArgb(32, 32, 32)
 $script:SecondaryTextColor = [System.Drawing.Color]::FromArgb(82, 82, 82)
 $script:HeaderTextColor = [System.Drawing.Color]::White
@@ -188,6 +204,54 @@ function Initialize-ApplicationTheme {
             Write-ApplicationLog (
                 'Invalid theme setting ignored. Setting=choice.borderSize Value={0}' -f
                 $borderSize
+            ) -Level WARN
+        }
+    }
+
+    $arrowSize = $Configuration.theme.choice.arrowSize
+    if ($null -ne $arrowSize) {
+        $parsedArrowSize = 0
+        if ([int]::TryParse([string]$arrowSize, [ref]$parsedArrowSize) -and
+            $parsedArrowSize -ge 16 -and $parsedArrowSize -le 40) {
+            $script:ButtonArrowSize = $parsedArrowSize
+        }
+        else {
+            Write-ApplicationLog (
+                'Invalid theme setting ignored. Setting=choice.arrowSize Value={0}' -f
+                $arrowSize
+            ) -Level WARN
+        }
+    }
+
+    $informationBorderSize = $Configuration.theme.information.borderSize
+    if ($null -ne $informationBorderSize) {
+        $parsedInformationBorderSize = 0
+        if ([int]::TryParse(
+                [string]$informationBorderSize,
+                [ref]$parsedInformationBorderSize
+            ) -and $parsedInformationBorderSize -ge 0 -and
+            $parsedInformationBorderSize -le 5) {
+            $script:InfoBorderSize = $parsedInformationBorderSize
+        }
+        else {
+            Write-ApplicationLog (
+                'Invalid theme setting ignored. Setting=information.borderSize Value={0}' -f
+                $informationBorderSize
+            ) -Level WARN
+        }
+    }
+
+    $cornerRadius = $Configuration.theme.information.cornerRadius
+    if ($null -ne $cornerRadius) {
+        $parsedCornerRadius = 0
+        if ([int]::TryParse([string]$cornerRadius, [ref]$parsedCornerRadius) -and
+            $parsedCornerRadius -ge 0 -and $parsedCornerRadius -le 24) {
+            $script:InfoCornerRadius = $parsedCornerRadius
+        }
+        else {
+            Write-ApplicationLog (
+                'Invalid theme setting ignored. Setting=information.cornerRadius Value={0}' -f
+                $cornerRadius
             ) -Level WARN
         }
     }
@@ -402,9 +466,48 @@ function New-ChoiceCard {
         [Parameter(Mandatory)][ValidateSet('left', 'right')][string]$Value
     )
 
+    $arrowImage = New-Object System.Drawing.Bitmap(48, 48)
+    $graphics = [System.Drawing.Graphics]::FromImage($arrowImage)
+    try {
+        $graphics.TextRenderingHint =
+            [System.Drawing.Text.TextRenderingHint]::AntiAliasGridFit
+        $arrowFont = New-Object System.Drawing.Font(
+            'Segoe UI Symbol',
+            $script:ButtonArrowSize,
+            [System.Drawing.FontStyle]::Regular
+        )
+        $arrowBrush = New-Object System.Drawing.SolidBrush($script:ButtonTextColor)
+        $arrowFormat = New-Object System.Drawing.StringFormat
+        try {
+            $arrowFormat.Alignment = [System.Drawing.StringAlignment]::Center
+            $arrowFormat.LineAlignment = [System.Drawing.StringAlignment]::Center
+            $arrow = if ($Value -eq 'left') { [char]0x2190 } else { [char]0x2192 }
+            $graphics.DrawString(
+                [string]$arrow,
+                $arrowFont,
+                $arrowBrush,
+                (New-Object System.Drawing.RectangleF(0, 0, 48, 48)),
+                $arrowFormat
+            )
+        }
+        finally {
+            $arrowFormat.Dispose()
+            $arrowBrush.Dispose()
+            $arrowFont.Dispose()
+        }
+    }
+    finally {
+        $graphics.Dispose()
+    }
+
     $card = New-Object System.Windows.Forms.Button
     $card.Size = New-Object System.Drawing.Size(292, 132)
-    $card.Text = '{0}    {1}' -f $(if ($Value -eq 'left') { [char]0x2190 } else { [char]0x2192 }), $Title
+    $card.Text = $Title
+    $card.Image = $arrowImage
+    $card.TextImageRelation = [System.Windows.Forms.TextImageRelation]::ImageBeforeText
+    $card.ImageAlign = [System.Drawing.ContentAlignment]::MiddleCenter
+    $card.TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
+    $card.Padding = New-Object System.Windows.Forms.Padding(20, 0, 20, 0)
     $card.BackColor = $script:ButtonColor
     $card.ForeColor = $script:ButtonTextColor
     $card.Font = New-Object System.Drawing.Font('Segoe UI Semibold', 12)
@@ -424,6 +527,36 @@ function New-ChoiceCard {
     })
 
     return $card
+}
+
+function New-RoundedRectanglePath {
+    param(
+        [Parameter(Mandatory)][System.Drawing.RectangleF]$Bounds,
+        [Parameter(Mandatory)][int]$Radius
+    )
+
+    $path = New-Object System.Drawing.Drawing2D.GraphicsPath
+    if ($Radius -le 0) {
+        $path.AddRectangle($Bounds)
+        return $path
+    }
+
+    $diameter = [single]($Radius * 2)
+    $arc = New-Object System.Drawing.RectangleF(
+        $Bounds.X,
+        $Bounds.Y,
+        $diameter,
+        $diameter
+    )
+    $path.AddArc($arc, 180, 90)
+    $arc.X = $Bounds.Right - $diameter
+    $path.AddArc($arc, 270, 90)
+    $arc.Y = $Bounds.Bottom - $diameter
+    $path.AddArc($arc, 0, 90)
+    $arc.X = $Bounds.X
+    $path.AddArc($arc, 90, 90)
+    $path.CloseFigure()
+    return $path
 }
 
 function Show-MonitorPositionDialog {
@@ -456,10 +589,45 @@ function Show-MonitorPositionDialog {
     $infoPanel.Location = New-Object System.Drawing.Point(64, 344)
     $infoPanel.BackColor = $script:InfoColor
 
-    $accentBar = New-Object System.Windows.Forms.Panel
-    $accentBar.Size = New-Object System.Drawing.Size(4, 110)
-    $accentBar.Location = New-Object System.Drawing.Point(0, 0)
-    $accentBar.BackColor = $script:AccentColor
+    $regionPath = New-RoundedRectanglePath `
+        -Bounds (New-Object System.Drawing.RectangleF(
+            0,
+            0,
+            $infoPanel.Width,
+            $infoPanel.Height
+        )) `
+        -Radius $script:InfoCornerRadius
+    $infoPanel.Region = New-Object System.Drawing.Region($regionPath)
+    $regionPath.Dispose()
+    $infoPanel.Add_Paint({
+        param($sender, $eventArgs)
+        if ($script:InfoBorderSize -le 0) {
+            return
+        }
+
+        $eventArgs.Graphics.SmoothingMode =
+            [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
+        $inset = [single]($script:InfoBorderSize / 2)
+        $borderPath = New-RoundedRectanglePath `
+            -Bounds (New-Object System.Drawing.RectangleF(
+                $inset,
+                $inset,
+                ($sender.Width - $script:InfoBorderSize),
+                ($sender.Height - $script:InfoBorderSize)
+            )) `
+            -Radius $script:InfoCornerRadius
+        $pen = New-Object System.Drawing.Pen(
+            $script:AccentColor,
+            $script:InfoBorderSize
+        )
+        try {
+            $eventArgs.Graphics.DrawPath($pen, $borderPath)
+        }
+        finally {
+            $pen.Dispose()
+            $borderPath.Dispose()
+        }
+    })
 
     $infoTitle = New-Object System.Windows.Forms.Label
     $infoTitle.Text = Get-LocalizedText -Key 'beforeContinue'
@@ -475,7 +643,7 @@ function Show-MonitorPositionDialog {
     $infoText.Font = New-Object System.Drawing.Font('Segoe UI', 9.5)
     $infoText.ForeColor = $script:SecondaryTextColor
 
-    $infoPanel.Controls.AddRange(@($accentBar, $infoTitle, $infoText))
+    $infoPanel.Controls.AddRange(@($infoTitle, $infoText))
     $form.Controls.Add($infoPanel)
 
     [void]$form.ShowDialog()
@@ -648,6 +816,11 @@ try {
         $PID
     )
     Write-ApplicationLog "LogPath=$script:LogPath"
+    Write-ApplicationLog (
+        'Taskbar identity initialized. AppUserModelId={0} Result={1}' -f
+        $script:ApplicationUserModelId,
+        $script:TaskbarIdentityResult
+    )
     Write-ApplicationLog "Language selected. Language=$script:SelectedLanguage"
     $toolPath = Resolve-MultiMonitorToolPath -ExplicitPath $MultiMonitorToolPath -Configuration $configuration
     Write-ApplicationLog "MultiMonitorTool found. Path=$toolPath"
