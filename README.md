@@ -115,22 +115,32 @@ Interface colors can be changed without editing the PowerShell script. Add or mo
   "language": "en-US",
   "theme": {
     "primary": "#2563A5",
-    "choice": "#FFFFFF",
-    "choiceText": "#2563A5",
-    "choiceHover": "#EFF6FF",
-    "choicePressed": "#DBEAFE",
-    "accent": "#93C5FD",
     "window": "#FFFFFF",
-    "information": "#F4F7FA",
-    "primaryText": "#202020",
-    "secondaryText": "#525252",
     "headerText": "#FFFFFF",
-    "controlBorder": "#BECAD5"
+    "text": {
+      "primary": "#202020",
+      "secondary": "#525252"
+    },
+    "choice": {
+      "background": "#F1F5F9",
+      "foreground": "#174F86",
+      "hover": "#E2ECF7",
+      "pressed": "#D4E3F3",
+      "border": "#D6E2F0",
+      "borderSize": 0
+    },
+    "information": {
+      "background": "#F7F7F7",
+      "accent": "#9AA9B8"
+    },
+    "controls": {
+      "border": "#BECAD5"
+    }
   }
 }
 ```
 
-The installer writes these neutral default colors to the installed `config.json`. Individual settings may be omitted to retain their built-in defaults. Missing or invalid values do not prevent the application from starting; they are ignored and recorded as warnings in the application log. Running the installer again preserves the existing language and theme settings. See `config.example.json` for a complete example.
+The `choice.borderSize` value accepts a whole number from `0` through `5`; the default `0` creates borderless choice buttons. The installer writes this complete configuration to the installed `config.json` and replaces an existing configuration when run again. Individual settings may be omitted to retain their built-in defaults. Missing or invalid values do not prevent the application from starting; they are ignored and recorded as warnings in the application log. See `config.example.json` for a complete example.
 
 ## Installation
 
