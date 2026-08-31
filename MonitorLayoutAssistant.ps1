@@ -13,13 +13,15 @@ $ErrorActionPreference = 'Stop'
 $script:ApplicationName = 'Monitor Layout Assistant'
 $script:ApplicationVersion = '0.1.0'
 $script:PrimaryColor = [System.Drawing.Color]::FromArgb(37, 99, 165)
-$script:ButtonColor = [System.Drawing.Color]::White
-$script:ButtonTextColor = [System.Drawing.Color]::FromArgb(37, 99, 165)
-$script:ButtonHoverColor = [System.Drawing.Color]::FromArgb(239, 246, 255)
-$script:ButtonPressedColor = [System.Drawing.Color]::FromArgb(219, 234, 254)
-$script:AccentColor = [System.Drawing.Color]::FromArgb(147, 197, 253)
+$script:ButtonColor = [System.Drawing.Color]::FromArgb(241, 245, 249)
+$script:ButtonTextColor = [System.Drawing.Color]::FromArgb(23, 79, 134)
+$script:ButtonHoverColor = [System.Drawing.Color]::FromArgb(226, 236, 247)
+$script:ButtonPressedColor = [System.Drawing.Color]::FromArgb(212, 227, 243)
+$script:ButtonBorderColor = [System.Drawing.Color]::FromArgb(214, 226, 240)
+$script:ButtonBorderSize = 0
+$script:AccentColor = [System.Drawing.Color]::FromArgb(154, 169, 184)
 $script:WindowColor = [System.Drawing.Color]::White
-$script:InfoColor = [System.Drawing.Color]::FromArgb(244, 247, 250)
+$script:InfoColor = [System.Drawing.Color]::FromArgb(247, 247, 247)
 $script:PrimaryTextColor = [System.Drawing.Color]::FromArgb(32, 32, 32)
 $script:SecondaryTextColor = [System.Drawing.Color]::FromArgb(82, 82, 82)
 $script:HeaderTextColor = [System.Drawing.Color]::White
@@ -130,27 +132,36 @@ function Initialize-ApplicationTheme {
     }
 
     $colorMappings = [ordered]@{
-        primary        = 'PrimaryColor'
-        choice         = 'ButtonColor'
-        choiceText     = 'ButtonTextColor'
-        choiceHover    = 'ButtonHoverColor'
-        choicePressed  = 'ButtonPressedColor'
-        accent         = 'AccentColor'
-        window         = 'WindowColor'
-        information    = 'InfoColor'
-        primaryText    = 'PrimaryTextColor'
-        secondaryText  = 'SecondaryTextColor'
-        headerText     = 'HeaderTextColor'
-        controlBorder  = 'ControlBorderColor'
+        'primary'                = 'PrimaryColor'
+        'window'                 = 'WindowColor'
+        'headerText'             = 'HeaderTextColor'
+        'text.primary'           = 'PrimaryTextColor'
+        'text.secondary'         = 'SecondaryTextColor'
+        'choice.background'      = 'ButtonColor'
+        'choice.foreground'      = 'ButtonTextColor'
+        'choice.hover'           = 'ButtonHoverColor'
+        'choice.pressed'         = 'ButtonPressedColor'
+        'choice.border'          = 'ButtonBorderColor'
+        'information.background' = 'InfoColor'
+        'information.accent'     = 'AccentColor'
+        'controls.border'        = 'ControlBorderColor'
     }
 
     foreach ($entry in $colorMappings.GetEnumerator()) {
-        $property = $Configuration.theme.PSObject.Properties[$entry.Key]
-        if ($null -eq $property -or [string]::IsNullOrWhiteSpace([string]$property.Value)) {
+        $setting = $Configuration.theme
+        foreach ($segment in $entry.Key.Split('.')) {
+            if ($null -eq $setting) {
+                break
+            }
+            $property = $setting.PSObject.Properties[$segment]
+            $setting = if ($null -eq $property) { $null } else { $property.Value }
+        }
+
+        if ($null -eq $setting -or [string]::IsNullOrWhiteSpace([string]$setting)) {
             continue
         }
 
-        $value = [string]$property.Value
+        $value = [string]$setting
         if ($value -notmatch '^#[0-9A-Fa-f]{6}$') {
             Write-ApplicationLog (
                 'Invalid theme color ignored. Setting={0} Value={1}' -f
@@ -164,6 +175,21 @@ function Initialize-ApplicationTheme {
             -Name $entry.Value `
             -Value ([System.Drawing.ColorTranslator]::FromHtml($value)) `
             -Scope Script
+    }
+
+    $borderSize = $Configuration.theme.choice.borderSize
+    if ($null -ne $borderSize) {
+        $parsedBorderSize = 0
+        if ([int]::TryParse([string]$borderSize, [ref]$parsedBorderSize) -and
+            $parsedBorderSize -ge 0 -and $parsedBorderSize -le 5) {
+            $script:ButtonBorderSize = $parsedBorderSize
+        }
+        else {
+            Write-ApplicationLog (
+                'Invalid theme setting ignored. Setting=choice.borderSize Value={0}' -f
+                $borderSize
+            ) -Level WARN
+        }
     }
 }
 
@@ -383,8 +409,8 @@ function New-ChoiceCard {
     $card.ForeColor = $script:ButtonTextColor
     $card.Font = New-Object System.Drawing.Font('Segoe UI Semibold', 12)
     $card.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
-    $card.FlatAppearance.BorderColor = $script:PrimaryColor
-    $card.FlatAppearance.BorderSize = 2
+    $card.FlatAppearance.BorderColor = $script:ButtonBorderColor
+    $card.FlatAppearance.BorderSize = $script:ButtonBorderSize
     $card.FlatAppearance.MouseOverBackColor = $script:ButtonHoverColor
     $card.FlatAppearance.MouseDownBackColor = $script:ButtonPressedColor
     $card.UseVisualStyleBackColor = $false
@@ -433,7 +459,7 @@ function Show-MonitorPositionDialog {
     $accentBar = New-Object System.Windows.Forms.Panel
     $accentBar.Size = New-Object System.Drawing.Size(4, 110)
     $accentBar.Location = New-Object System.Drawing.Point(0, 0)
-    $accentBar.BackColor = $script:PrimaryColor
+    $accentBar.BackColor = $script:AccentColor
 
     $infoTitle = New-Object System.Windows.Forms.Label
     $infoTitle.Text = Get-LocalizedText -Key 'beforeContinue'
