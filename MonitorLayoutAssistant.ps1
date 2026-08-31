@@ -14,9 +14,16 @@ $script:ApplicationName = 'Monitor Layout Assistant'
 $script:ApplicationVersion = '0.1.0'
 $script:PrimaryColor = [System.Drawing.Color]::FromArgb(37, 99, 165)
 $script:ButtonColor = [System.Drawing.Color]::White
+$script:ButtonTextColor = [System.Drawing.Color]::FromArgb(37, 99, 165)
 $script:ButtonHoverColor = [System.Drawing.Color]::FromArgb(239, 246, 255)
 $script:ButtonPressedColor = [System.Drawing.Color]::FromArgb(219, 234, 254)
 $script:AccentColor = [System.Drawing.Color]::FromArgb(147, 197, 253)
+$script:WindowColor = [System.Drawing.Color]::White
+$script:InfoColor = [System.Drawing.Color]::FromArgb(244, 247, 250)
+$script:PrimaryTextColor = [System.Drawing.Color]::FromArgb(32, 32, 32)
+$script:SecondaryTextColor = [System.Drawing.Color]::FromArgb(82, 82, 82)
+$script:HeaderTextColor = [System.Drawing.Color]::White
+$script:ControlBorderColor = [System.Drawing.Color]::FromArgb(190, 202, 213)
 $script:ConfigurationPath = Join-Path $PSScriptRoot 'config.json'
 $script:LanguageFolderPath = Join-Path $PSScriptRoot 'Languages'
 $script:IconPath = Join-Path $PSScriptRoot 'Assets\MonitorLayoutAssistant.ico'
@@ -113,6 +120,51 @@ function Get-LocalizedText {
     }
 
     return $value
+}
+
+function Initialize-ApplicationTheme {
+    param([Parameter(Mandatory)][object]$Configuration)
+
+    if ($null -eq $Configuration.theme) {
+        return
+    }
+
+    $colorMappings = [ordered]@{
+        primary        = 'PrimaryColor'
+        choice         = 'ButtonColor'
+        choiceText     = 'ButtonTextColor'
+        choiceHover    = 'ButtonHoverColor'
+        choicePressed  = 'ButtonPressedColor'
+        accent         = 'AccentColor'
+        window         = 'WindowColor'
+        information    = 'InfoColor'
+        primaryText    = 'PrimaryTextColor'
+        secondaryText  = 'SecondaryTextColor'
+        headerText     = 'HeaderTextColor'
+        controlBorder  = 'ControlBorderColor'
+    }
+
+    foreach ($entry in $colorMappings.GetEnumerator()) {
+        $property = $Configuration.theme.PSObject.Properties[$entry.Key]
+        if ($null -eq $property -or [string]::IsNullOrWhiteSpace([string]$property.Value)) {
+            continue
+        }
+
+        $value = [string]$property.Value
+        if ($value -notmatch '^#[0-9A-Fa-f]{6}$') {
+            Write-ApplicationLog (
+                'Invalid theme color ignored. Setting={0} Value={1}' -f
+                $entry.Key,
+                $value
+            ) -Level WARN
+            continue
+        }
+
+        Set-Variable `
+            -Name $entry.Value `
+            -Value ([System.Drawing.ColorTranslator]::FromHtml($value)) `
+            -Scope Script
+    }
 }
 
 function Initialize-ApplicationLogging {
@@ -282,7 +334,7 @@ function Set-FormDefaults {
         $Form.Icon = [System.Drawing.SystemIcons]::Application
     }
     $Form.TopMost = $true
-    $Form.BackColor = [System.Drawing.Color]::White
+    $Form.BackColor = $script:WindowColor
     $Form.Font = New-Object System.Drawing.Font('Segoe UI', 10)
 }
 
@@ -309,7 +361,7 @@ function New-HeaderPanel {
         17,
         [System.Drawing.FontStyle]::Bold
     )
-    $label.ForeColor = [System.Drawing.Color]::White
+    $label.ForeColor = $script:HeaderTextColor
     $label.BackColor = [System.Drawing.Color]::Transparent
     $label.TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
     $header.Controls.Add($label)
@@ -328,7 +380,7 @@ function New-ChoiceCard {
     $card.Size = New-Object System.Drawing.Size(292, 132)
     $card.Text = '{0}    {1}' -f $(if ($Value -eq 'left') { [char]0x2190 } else { [char]0x2192 }), $Title
     $card.BackColor = $script:ButtonColor
-    $card.ForeColor = $script:PrimaryColor
+    $card.ForeColor = $script:ButtonTextColor
     $card.Font = New-Object System.Drawing.Font('Segoe UI Semibold', 12)
     $card.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
     $card.FlatAppearance.BorderColor = $script:PrimaryColor
@@ -361,7 +413,7 @@ function Show-MonitorPositionDialog {
     $question.Size = New-Object System.Drawing.Size(680, 34)
     $question.Location = New-Object System.Drawing.Point(40, 122)
     $question.Font = New-Object System.Drawing.Font('Segoe UI Semibold', 14)
-    $question.ForeColor = [System.Drawing.Color]::FromArgb(32, 32, 32)
+    $question.ForeColor = $script:PrimaryTextColor
     $question.TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
     $form.Controls.Add($question)
 
@@ -376,7 +428,7 @@ function Show-MonitorPositionDialog {
     $infoPanel = New-Object System.Windows.Forms.Panel
     $infoPanel.Size = New-Object System.Drawing.Size(632, 110)
     $infoPanel.Location = New-Object System.Drawing.Point(64, 344)
-    $infoPanel.BackColor = [System.Drawing.Color]::FromArgb(244, 247, 250)
+    $infoPanel.BackColor = $script:InfoColor
 
     $accentBar = New-Object System.Windows.Forms.Panel
     $accentBar.Size = New-Object System.Drawing.Size(4, 110)
@@ -388,14 +440,14 @@ function Show-MonitorPositionDialog {
     $infoTitle.Size = New-Object System.Drawing.Size(575, 23)
     $infoTitle.Location = New-Object System.Drawing.Point(24, 13)
     $infoTitle.Font = New-Object System.Drawing.Font('Segoe UI Semibold', 10.5)
-    $infoTitle.ForeColor = [System.Drawing.Color]::FromArgb(32, 32, 32)
+    $infoTitle.ForeColor = $script:PrimaryTextColor
 
     $infoText = New-Object System.Windows.Forms.Label
     $infoText.Text = Get-LocalizedText -Key 'physicalOrderInformation'
     $infoText.Size = New-Object System.Drawing.Size(575, 58)
     $infoText.Location = New-Object System.Drawing.Point(24, 43)
     $infoText.Font = New-Object System.Drawing.Font('Segoe UI', 9.5)
-    $infoText.ForeColor = [System.Drawing.Color]::FromArgb(82, 82, 82)
+    $infoText.ForeColor = $script:SecondaryTextColor
 
     $infoPanel.Controls.AddRange(@($accentBar, $infoTitle, $infoText))
     $form.Controls.Add($infoPanel)
@@ -418,7 +470,7 @@ function Show-ProgressDialog {
     $statusTitle.Size = New-Object System.Drawing.Size(480, 30)
     $statusTitle.Location = New-Object System.Drawing.Point(40, 112)
     $statusTitle.Font = New-Object System.Drawing.Font('Segoe UI Semibold', 12)
-    $statusTitle.ForeColor = [System.Drawing.Color]::FromArgb(32, 32, 32)
+    $statusTitle.ForeColor = $script:PrimaryTextColor
     $statusTitle.TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
 
     $statusText = New-Object System.Windows.Forms.Label
@@ -426,7 +478,7 @@ function Show-ProgressDialog {
     $statusText.Text = Get-LocalizedText -Key 'preparingDisplays'
     $statusText.Size = New-Object System.Drawing.Size(480, 28)
     $statusText.Location = New-Object System.Drawing.Point(40, 148)
-    $statusText.ForeColor = [System.Drawing.Color]::FromArgb(82, 82, 82)
+    $statusText.ForeColor = $script:SecondaryTextColor
     $statusText.TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
 
     $progress = New-Object System.Windows.Forms.ProgressBar
@@ -475,11 +527,10 @@ function Show-ProgressCompleted {
     $closeButton.Text = Get-LocalizedText -Key 'done'
     $closeButton.Size = New-Object System.Drawing.Size(120, 34)
     $closeButton.Location = New-Object System.Drawing.Point(220, 198)
-    $closeButton.BackColor = [System.Drawing.Color]::White
-    $closeButton.ForeColor = [System.Drawing.Color]::FromArgb(72, 72, 72)
+    $closeButton.BackColor = $script:ButtonColor
+    $closeButton.ForeColor = $script:SecondaryTextColor
     $closeButton.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
-    $closeButton.FlatAppearance.BorderColor =
-        [System.Drawing.Color]::FromArgb(190, 202, 213)
+    $closeButton.FlatAppearance.BorderColor = $script:ControlBorderColor
     $closeButton.Cursor = [System.Windows.Forms.Cursors]::Hand
     $closeButton.Add_Click({ $Form.Close() })
     $Form.Controls.Add($closeButton)
@@ -561,6 +612,7 @@ Initialize-ApplicationLogging
 try {
     $configuration = Import-ApplicationConfiguration
     Initialize-Localization -Configuration $configuration
+    Initialize-ApplicationTheme -Configuration $configuration
 
     Write-ApplicationLog (
         'Application started. Version={0} Computer={1} User={2} ProcessId={3}' -f
