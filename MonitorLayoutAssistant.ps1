@@ -36,7 +36,7 @@ $script:ButtonArrowSize = 26
 $script:InfoBorderColor = [System.Drawing.Color]::FromArgb(232, 190, 80)
 $script:InfoBorderSize = 0
 $script:WindowColor = [System.Drawing.Color]::White
-$script:InfoColor = [System.Drawing.Color]::FromArgb(255, 253, 243)
+$script:InfoColor = [System.Drawing.Color]::FromArgb(247, 247, 247)
 $script:PrimaryTextColor = [System.Drawing.Color]::FromArgb(32, 32, 32)
 $script:SecondaryTextColor = [System.Drawing.Color]::FromArgb(82, 82, 82)
 $script:HeaderTextColor = [System.Drawing.Color]::White
@@ -467,38 +467,59 @@ function New-ChoiceCard {
     $card.Tag = $Value
     $card | Add-Member -NotePropertyName ChoiceTitle -NotePropertyValue $Title
     $card | Add-Member -NotePropertyName ChoiceValue -NotePropertyValue $Value
-    $card | Add-Member `
-        -NotePropertyName ChoiceArrow `
-        -NotePropertyValue $(if ($Value -eq 'left') { [char]0x2190 } else { [char]0x2192 })
     $card.Add_Paint({
         param($sender, $eventArgs)
 
-        $arrowFont = New-Object System.Drawing.Font(
-            'Segoe UI Symbol',
-            $script:ButtonArrowSize,
-            [System.Drawing.FontStyle]::Regular
-        )
+        $arrowPen = New-Object System.Drawing.Pen($sender.ForeColor, 2)
         try {
-            $arrowBounds = if ($sender.ChoiceValue -eq 'left') {
-                New-Object System.Drawing.Rectangle(30, 0, 62, $sender.Height)
+            $eventArgs.Graphics.SmoothingMode =
+                [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
+            $arrowPen.StartCap = [System.Drawing.Drawing2D.LineCap]::Round
+            $arrowPen.EndCap = [System.Drawing.Drawing2D.LineCap]::Round
+
+            $centerX = if ($sender.ChoiceValue -eq 'left') { 61 } else { 231 }
+            $centerY = [int][math]::Floor($sender.Height / 2)
+            $halfLength = [int][math]::Floor($script:ButtonArrowSize / 2)
+            $headSize = [int][math]::Max(6, [math]::Floor($script:ButtonArrowSize / 4))
+            $startX = $centerX - $halfLength
+            $endX = $centerX + $halfLength
+
+            $eventArgs.Graphics.DrawLine($arrowPen, $startX, $centerY, $endX, $centerY)
+            if ($sender.ChoiceValue -eq 'left') {
+                $eventArgs.Graphics.DrawLine(
+                    $arrowPen,
+                    $startX,
+                    $centerY,
+                    ($startX + $headSize),
+                    ($centerY - $headSize)
+                )
+                $eventArgs.Graphics.DrawLine(
+                    $arrowPen,
+                    $startX,
+                    $centerY,
+                    ($startX + $headSize),
+                    ($centerY + $headSize)
+                )
             }
             else {
-                New-Object System.Drawing.Rectangle(200, 0, 62, $sender.Height)
+                $eventArgs.Graphics.DrawLine(
+                    $arrowPen,
+                    $endX,
+                    $centerY,
+                    ($endX - $headSize),
+                    ($centerY - $headSize)
+                )
+                $eventArgs.Graphics.DrawLine(
+                    $arrowPen,
+                    $endX,
+                    $centerY,
+                    ($endX - $headSize),
+                    ($centerY + $headSize)
+                )
             }
-            [System.Windows.Forms.TextRenderer]::DrawText(
-                $eventArgs.Graphics,
-                [string]$sender.ChoiceArrow,
-                $arrowFont,
-                $arrowBounds,
-                $sender.ForeColor,
-                ([System.Windows.Forms.TextFormatFlags]::HorizontalCenter -bor
-                    [System.Windows.Forms.TextFormatFlags]::VerticalCenter -bor
-                    [System.Windows.Forms.TextFormatFlags]::SingleLine -bor
-                    [System.Windows.Forms.TextFormatFlags]::NoPadding)
-            )
         }
         finally {
-            $arrowFont.Dispose()
+            $arrowPen.Dispose()
         }
 
         $textBounds = if ($sender.ChoiceValue -eq 'left') {
