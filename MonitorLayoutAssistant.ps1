@@ -33,11 +33,10 @@ $script:ButtonPressedColor = [System.Drawing.Color]::FromArgb(181, 213, 236)
 $script:ButtonBorderColor = [System.Drawing.Color]::FromArgb(220, 236, 248)
 $script:ButtonBorderSize = 0
 $script:ButtonArrowSize = 26
-$script:AccentColor = [System.Drawing.Color]::FromArgb(217, 154, 0)
-$script:InfoBorderSize = 1
-$script:InfoCornerRadius = 8
+$script:InfoBorderColor = [System.Drawing.Color]::FromArgb(232, 190, 80)
+$script:InfoBorderSize = 0
 $script:WindowColor = [System.Drawing.Color]::White
-$script:InfoColor = [System.Drawing.Color]::FromArgb(255, 248, 225)
+$script:InfoColor = [System.Drawing.Color]::FromArgb(255, 253, 243)
 $script:PrimaryTextColor = [System.Drawing.Color]::FromArgb(32, 32, 32)
 $script:SecondaryTextColor = [System.Drawing.Color]::FromArgb(82, 82, 82)
 $script:HeaderTextColor = [System.Drawing.Color]::White
@@ -159,7 +158,7 @@ function Initialize-ApplicationTheme {
         'choice.pressed'         = 'ButtonPressedColor'
         'choice.border'          = 'ButtonBorderColor'
         'information.background' = 'InfoColor'
-        'information.accent'     = 'AccentColor'
+        'information.border'     = 'InfoBorderColor'
         'controls.border'        = 'ControlBorderColor'
     }
 
@@ -241,20 +240,6 @@ function Initialize-ApplicationTheme {
         }
     }
 
-    $cornerRadius = $Configuration.theme.information.cornerRadius
-    if ($null -ne $cornerRadius) {
-        $parsedCornerRadius = 0
-        if ([int]::TryParse([string]$cornerRadius, [ref]$parsedCornerRadius) -and
-            $parsedCornerRadius -ge 0 -and $parsedCornerRadius -le 24) {
-            $script:InfoCornerRadius = $parsedCornerRadius
-        }
-        else {
-            Write-ApplicationLog (
-                'Invalid theme setting ignored. Setting=information.cornerRadius Value={0}' -f
-                $cornerRadius
-            ) -Level WARN
-        }
-    }
 }
 
 function Initialize-ApplicationLogging {
@@ -466,48 +451,9 @@ function New-ChoiceCard {
         [Parameter(Mandatory)][ValidateSet('left', 'right')][string]$Value
     )
 
-    $arrowImage = New-Object System.Drawing.Bitmap(48, 48)
-    $graphics = [System.Drawing.Graphics]::FromImage($arrowImage)
-    try {
-        $graphics.TextRenderingHint =
-            [System.Drawing.Text.TextRenderingHint]::AntiAliasGridFit
-        $arrowFont = New-Object System.Drawing.Font(
-            'Segoe UI Symbol',
-            $script:ButtonArrowSize,
-            [System.Drawing.FontStyle]::Regular
-        )
-        $arrowBrush = New-Object System.Drawing.SolidBrush($script:ButtonTextColor)
-        $arrowFormat = New-Object System.Drawing.StringFormat
-        try {
-            $arrowFormat.Alignment = [System.Drawing.StringAlignment]::Center
-            $arrowFormat.LineAlignment = [System.Drawing.StringAlignment]::Center
-            $arrow = if ($Value -eq 'left') { [char]0x2190 } else { [char]0x2192 }
-            $graphics.DrawString(
-                [string]$arrow,
-                $arrowFont,
-                $arrowBrush,
-                (New-Object System.Drawing.RectangleF(0, 0, 48, 48)),
-                $arrowFormat
-            )
-        }
-        finally {
-            $arrowFormat.Dispose()
-            $arrowBrush.Dispose()
-            $arrowFont.Dispose()
-        }
-    }
-    finally {
-        $graphics.Dispose()
-    }
-
     $card = New-Object System.Windows.Forms.Button
     $card.Size = New-Object System.Drawing.Size(292, 132)
-    $card.Text = $Title
-    $card.Image = $arrowImage
-    $card.TextImageRelation = [System.Windows.Forms.TextImageRelation]::ImageBeforeText
-    $card.ImageAlign = [System.Drawing.ContentAlignment]::MiddleCenter
-    $card.TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
-    $card.Padding = New-Object System.Windows.Forms.Padding(20, 0, 20, 0)
+    $card.Text = ''
     $card.BackColor = $script:ButtonColor
     $card.ForeColor = $script:ButtonTextColor
     $card.Font = New-Object System.Drawing.Font('Segoe UI Semibold', 12)
@@ -519,6 +465,67 @@ function New-ChoiceCard {
     $card.UseVisualStyleBackColor = $false
     $card.Cursor = [System.Windows.Forms.Cursors]::Hand
     $card.Tag = $Value
+    $card | Add-Member -NotePropertyName ChoiceTitle -NotePropertyValue $Title
+    $card | Add-Member -NotePropertyName ChoiceValue -NotePropertyValue $Value
+    $card | Add-Member `
+        -NotePropertyName ChoiceArrow `
+        -NotePropertyValue $(if ($Value -eq 'left') { [char]0x2190 } else { [char]0x2192 })
+    $card.Add_Paint({
+        param($sender, $eventArgs)
+
+        $arrowFont = New-Object System.Drawing.Font(
+            'Segoe UI Symbol',
+            $script:ButtonArrowSize,
+            [System.Drawing.FontStyle]::Regular
+        )
+        try {
+            $arrowBounds = if ($sender.ChoiceValue -eq 'left') {
+                New-Object System.Drawing.Rectangle(30, 0, 62, $sender.Height)
+            }
+            else {
+                New-Object System.Drawing.Rectangle(200, 0, 62, $sender.Height)
+            }
+            [System.Windows.Forms.TextRenderer]::DrawText(
+                $eventArgs.Graphics,
+                [string]$sender.ChoiceArrow,
+                $arrowFont,
+                $arrowBounds,
+                $sender.ForeColor,
+                ([System.Windows.Forms.TextFormatFlags]::HorizontalCenter -bor
+                    [System.Windows.Forms.TextFormatFlags]::VerticalCenter -bor
+                    [System.Windows.Forms.TextFormatFlags]::SingleLine -bor
+                    [System.Windows.Forms.TextFormatFlags]::NoPadding)
+            )
+        }
+        finally {
+            $arrowFont.Dispose()
+        }
+
+        $textBounds = if ($sender.ChoiceValue -eq 'left') {
+            New-Object System.Drawing.Rectangle(96, 0, 180, $sender.Height)
+        }
+        else {
+            New-Object System.Drawing.Rectangle(16, 0, 180, $sender.Height)
+        }
+        $horizontalAlignment = if ($sender.ChoiceValue -eq 'left') {
+            [System.Windows.Forms.TextFormatFlags]::Left
+        }
+        else {
+            [System.Windows.Forms.TextFormatFlags]::Right
+        }
+        [System.Windows.Forms.TextRenderer]::DrawText(
+            $eventArgs.Graphics,
+            [string]$sender.ChoiceTitle,
+            $sender.Font,
+            $textBounds,
+            $sender.ForeColor,
+            ($horizontalAlignment -bor
+                [System.Windows.Forms.TextFormatFlags]::VerticalCenter -bor
+                [System.Windows.Forms.TextFormatFlags]::SingleLine -bor
+                [System.Windows.Forms.TextFormatFlags]::EndEllipsis -bor
+                [System.Windows.Forms.TextFormatFlags]::NoPrefix)
+        )
+    })
     $card.Add_Click({
         param($sender, $eventArgs)
         $form = $sender.FindForm()
@@ -527,36 +534,6 @@ function New-ChoiceCard {
     })
 
     return $card
-}
-
-function New-RoundedRectanglePath {
-    param(
-        [Parameter(Mandatory)][System.Drawing.RectangleF]$Bounds,
-        [Parameter(Mandatory)][int]$Radius
-    )
-
-    $path = New-Object System.Drawing.Drawing2D.GraphicsPath
-    if ($Radius -le 0) {
-        $path.AddRectangle($Bounds)
-        return $path
-    }
-
-    $diameter = [single]($Radius * 2)
-    $arc = New-Object System.Drawing.RectangleF(
-        $Bounds.X,
-        $Bounds.Y,
-        $diameter,
-        $diameter
-    )
-    $path.AddArc($arc, 180, 90)
-    $arc.X = $Bounds.Right - $diameter
-    $path.AddArc($arc, 270, 90)
-    $arc.Y = $Bounds.Bottom - $diameter
-    $path.AddArc($arc, 0, 90)
-    $arc.X = $Bounds.X
-    $path.AddArc($arc, 90, 90)
-    $path.CloseFigure()
-    return $path
 }
 
 function Show-MonitorPositionDialog {
@@ -589,43 +566,28 @@ function Show-MonitorPositionDialog {
     $infoPanel.Location = New-Object System.Drawing.Point(64, 344)
     $infoPanel.BackColor = $script:InfoColor
 
-    $regionPath = New-RoundedRectanglePath `
-        -Bounds (New-Object System.Drawing.RectangleF(
-            0,
-            0,
-            $infoPanel.Width,
-            $infoPanel.Height
-        )) `
-        -Radius $script:InfoCornerRadius
-    $infoPanel.Region = New-Object System.Drawing.Region($regionPath)
-    $regionPath.Dispose()
     $infoPanel.Add_Paint({
         param($sender, $eventArgs)
         if ($script:InfoBorderSize -le 0) {
             return
         }
 
-        $eventArgs.Graphics.SmoothingMode =
-            [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
-        $inset = [single]($script:InfoBorderSize / 2)
-        $borderPath = New-RoundedRectanglePath `
-            -Bounds (New-Object System.Drawing.RectangleF(
+        $pen = New-Object System.Drawing.Pen(
+            $script:InfoBorderColor,
+            $script:InfoBorderSize
+        )
+        try {
+            $inset = [int][math]::Floor($script:InfoBorderSize / 2)
+            $eventArgs.Graphics.DrawRectangle(
+                $pen,
                 $inset,
                 $inset,
                 ($sender.Width - $script:InfoBorderSize),
                 ($sender.Height - $script:InfoBorderSize)
-            )) `
-            -Radius $script:InfoCornerRadius
-        $pen = New-Object System.Drawing.Pen(
-            $script:AccentColor,
-            $script:InfoBorderSize
-        )
-        try {
-            $eventArgs.Graphics.DrawPath($pen, $borderPath)
+            )
         }
         finally {
             $pen.Dispose()
-            $borderPath.Dispose()
         }
     })
 
