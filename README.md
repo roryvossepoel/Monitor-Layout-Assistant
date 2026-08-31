@@ -114,7 +114,7 @@ Interface colors can be changed without editing the PowerShell script. Add or mo
   "multiMonitorToolPath": "",
   "language": "en-US",
   "theme": {
-    "primary": "#2563A5",
+    "primary": "#243B53",
     "window": "#FFFFFF",
     "headerText": "#FFFFFF",
     "text": {
@@ -122,16 +122,19 @@ Interface colors can be changed without editing the PowerShell script. Add or mo
       "secondary": "#525252"
     },
     "choice": {
-      "background": "#F1F5F9",
-      "foreground": "#174F86",
-      "hover": "#E2ECF7",
-      "pressed": "#D4E3F3",
-      "border": "#D6E2F0",
-      "borderSize": 0
+      "background": "#DCECF8",
+      "foreground": "#174F7A",
+      "hover": "#C9E1F3",
+      "pressed": "#B5D5EC",
+      "border": "#DCECF8",
+      "borderSize": 0,
+      "arrowSize": 26
     },
     "information": {
-      "background": "#F7F7F7",
-      "accent": "#9AA9B8"
+      "background": "#FFF8E1",
+      "accent": "#D99A00",
+      "borderSize": 1,
+      "cornerRadius": 8
     },
     "controls": {
       "border": "#BECAD5"
@@ -140,7 +143,7 @@ Interface colors can be changed without editing the PowerShell script. Add or mo
 }
 ```
 
-The `choice.borderSize` value accepts a whole number from `0` through `5`; the default `0` creates borderless choice buttons. The installer writes this complete configuration to the installed `config.json` and replaces an existing configuration when run again. Individual settings may be omitted to retain their built-in defaults. Missing or invalid values do not prevent the application from starting; they are ignored and recorded as warnings in the application log. See `config.example.json` for a complete example.
+The `choice.borderSize` value accepts a whole number from `0` through `5`; the default `0` creates borderless choice buttons. `choice.arrowSize` accepts `16` through `40`. The information panel supports a border of `0` through `5` pixels and a corner radius of `0` through `24` pixels. The installer writes this complete configuration to the installed `config.json` and replaces an existing configuration when run again. Individual settings may be omitted to retain their built-in defaults. Missing or invalid values do not prevent the application from starting; they are ignored and recorded as warnings in the application log. See `config.example.json` for a complete example.
 
 ## Installation
 
@@ -164,6 +167,8 @@ C:\Program Files\Monitor Layout Assistant
 ```
 
 It also creates a Start menu shortcut for all users.
+
+The running application sets its own Windows taskbar identity and window icon. This allows Windows to display the Monitor Layout Assistant icon instead of identifying the window as the generic PowerShell host.
 
 ### Use an existing MultiMonitorTool location
 
