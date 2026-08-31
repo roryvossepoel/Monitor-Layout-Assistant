@@ -17,3 +17,5 @@ All notable changes to this project will be documented in this file.
 - Language selection through `config.json`.
 - Application icon for the interface and Start menu shortcut.
 - Persistent per-user logging with consistent severity levels and log rotation.
+- Installer warning when the optional hidden PowerShell host is unavailable.
+- Configurable interface colors through the `theme` section in `config.json`.
