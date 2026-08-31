@@ -85,8 +85,8 @@ $configuration = [ordered]@{
             arrowSize  = 26
         }
         information = [ordered]@{
-            background = '#FFFDF3'
-            border     = '#E8BE50'
+            background = '#F7F7F7'
+            border     = '#D8DEE5'
             borderSize = 0
         }
         controls    = [ordered]@{
