@@ -118,7 +118,7 @@ Included languages:
 | `it-IT` | Italian |
 | `pt-PT` | Portuguese |
 
-Each translation is stored as a separate JSON file in the `Languages` folder, for example `Languages/en-US.json` and `Languages/nl-NL.json`. This keeps translations easy to review and extend without changing the PowerShell script.
+Each translation is stored as a separate JSON file in the `App/Languages` folder, for example `App/Languages/en-US.json` and `App/Languages/nl-NL.json`. This keeps translations easy to review and extend without changing the PowerShell script.
 
 Set the language in `config.json`:
 
@@ -168,17 +168,18 @@ Interface colors can be changed without editing the PowerShell script. Add or mo
 }
 ```
 
-The `choice.borderSize` value accepts a whole number from `0` through `5`; the default `0` creates borderless choice buttons. `choice.arrowSize` controls the arrow length and accepts `16` through `40`. The information panel has square corners and supports an optional border of `0` through `5` pixels; `0` disables the border. The installer writes this complete configuration to the installed `config.json` and replaces an existing configuration when run again. Individual settings may be omitted to retain their built-in defaults. Missing or invalid values do not prevent the application from starting; they are ignored and recorded as warnings in the application log. See `config.example.json` for a complete example.
+The `choice.borderSize` value accepts a whole number from `0` through `5`; the default `0` creates borderless choice buttons. `choice.arrowSize` controls the arrow length and accepts `16` through `40`. The information panel has square corners and supports an optional border of `0` through `5` pixels; `0` disables the border. The installer reads this configuration from `App/config.json` and writes it to the installed application directory. Individual settings may be omitted to retain their built-in defaults. Missing or invalid values do not prevent the application from starting; they are ignored and recorded as warnings in the application log.
 
 ## Installation
 
 ### Standard installation
 
-1. Download this repository or its release archive.
+1. Download the application package from the latest release, or download this repository.
 2. Download MultiMonitorTool from [NirSoft](https://www.nirsoft.net/utils/multi_monitor_tool.html).
-3. Place `MultiMonitorTool.exe` next to `Install.ps1`.
-4. Run Windows PowerShell as administrator.
-5. Run:
+3. Open the `App` directory.
+4. Place `MultiMonitorTool.exe` next to `Install.ps1`.
+5. Run Windows PowerShell as administrator from that directory.
+6. Run:
 
 ```powershell
 Set-ExecutionPolicy -Scope Process Bypass
@@ -227,7 +228,7 @@ RunHiddenConsole is optional, is not included, and must be assessed separately b
 
 ## Manual use
 
-Monitor Layout Assistant can also be run without installation:
+Monitor Layout Assistant can also be run without installation from the `App` directory:
 
 ```powershell
 .\MonitorLayoutAssistant.ps1

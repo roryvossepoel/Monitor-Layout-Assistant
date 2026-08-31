@@ -12,6 +12,7 @@ $applicationName = 'Monitor Layout Assistant'
 $sourceScript = Join-Path $PSScriptRoot 'MonitorLayoutAssistant.ps1'
 $sourceLanguages = Join-Path $PSScriptRoot 'Languages'
 $sourceAssets = Join-Path $PSScriptRoot 'Assets'
+$sourceConfiguration = Join-Path $PSScriptRoot 'config.json'
 $startMenuPath = Join-Path $env:ProgramData 'Microsoft\Windows\Start Menu\Programs'
 $shortcutPath = Join-Path $startMenuPath "$applicationName.lnk"
 $recommendedPowerShellW = Join-Path $env:SystemRoot (
@@ -33,11 +34,35 @@ if (-not (Test-Path -LiteralPath $sourceAssets -PathType Container)) {
     throw "The Assets folder was not found next to Install.ps1."
 }
 
+if (-not (Test-Path -LiteralPath $sourceConfiguration -PathType Leaf)) {
+    throw "config.json was not found next to Install.ps1."
+}
+
+try {
+    $configuration = Get-Content -LiteralPath $sourceConfiguration -Raw |
+        ConvertFrom-Json
+}
+catch {
+    throw "config.json is invalid: $sourceConfiguration"
+}
+
 $sourceMultiMonitorTool = $null
 $configuredMultiMonitorToolPath = ''
 
 if (-not [string]::IsNullOrWhiteSpace($MultiMonitorToolPath)) {
     $expandedPath = [Environment]::ExpandEnvironmentVariables($MultiMonitorToolPath)
+    if (-not (Test-Path -LiteralPath $expandedPath -PathType Leaf)) {
+        throw "MultiMonitorTool.exe was not found at: $expandedPath"
+    }
+
+    $configuredMultiMonitorToolPath = (Resolve-Path -LiteralPath $expandedPath).Path
+}
+elseif (-not [string]::IsNullOrWhiteSpace(
+        [string]$configuration.multiMonitorToolPath
+    )) {
+    $expandedPath = [Environment]::ExpandEnvironmentVariables(
+        [string]$configuration.multiMonitorToolPath
+    )
     if (-not (Test-Path -LiteralPath $expandedPath -PathType Leaf)) {
         throw "MultiMonitorTool.exe was not found at: $expandedPath"
     }
@@ -64,36 +89,7 @@ if ($null -ne $sourceMultiMonitorTool) {
     Copy-Item -LiteralPath $sourceMultiMonitorTool -Destination $InstallPath -Force
 }
 
-$configuration = [ordered]@{
-    multiMonitorToolPath = $configuredMultiMonitorToolPath
-    language             = 'en-US'
-    theme                = [ordered]@{
-        primary     = '#243B53'
-        window      = '#FFFFFF'
-        headerText  = '#FFFFFF'
-        text        = [ordered]@{
-            primary   = '#202020'
-            secondary = '#525252'
-        }
-        choice      = [ordered]@{
-            background = '#DCECF8'
-            foreground = '#174F7A'
-            hover      = '#C9E1F3'
-            pressed    = '#B5D5EC'
-            border     = '#DCECF8'
-            borderSize = 0
-            arrowSize  = 26
-        }
-        information = [ordered]@{
-            background = '#F7F7F7'
-            border     = '#D8DEE5'
-            borderSize = 0
-        }
-        controls    = [ordered]@{
-            border = '#BECAD5'
-        }
-    }
-}
+$configuration.multiMonitorToolPath = $configuredMultiMonitorToolPath
 
 $configuration |
     ConvertTo-Json -Depth 5 |
