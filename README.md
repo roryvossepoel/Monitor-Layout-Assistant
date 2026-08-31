@@ -169,6 +169,35 @@ Place `MultiMonitorTool.exe` in the same directory or provide its location:
 
 Keep the `Languages` folder in the same directory as `MonitorLayoutAssistant.ps1`.
 
+## Logging
+
+Monitor Layout Assistant writes a persistent per-user log file, including when the application is started with the optional hidden PowerShell host:
+
+```text
+%LocalAppData%\Monitor Layout Assistant\Logs\MonitorLayoutAssistant.log
+```
+
+Every entry uses the same timestamp and severity format:
+
+```text
+2026-08-31 09:42:13.125 [INFO] Application started. Version=0.1.0 Computer=PC01 User=user ProcessId=1234
+2026-08-31 09:42:14.020 [INFO] Displays detected. Total=3 External=2 BuiltIn=1
+2026-08-31 09:42:20.417 [INFO] Configuration completed successfully.
+2026-08-31 09:43:02.006 [ERROR] Configuration failed. Message=...
+```
+
+The log records:
+
+- application version, computer, user and process ID;
+- selected language and MultiMonitorTool path;
+- detected monitor count, order, names and resolutions;
+- selected laptop position and primary display;
+- configuration actions, cancellations, warnings and errors.
+
+Line breaks in error details are normalized so every event remains on one log line. When the log reaches 2 MB, the previous file is retained as `MonitorLayoutAssistant.log.1`. If the log directory cannot be created or written, the application continues with console-only logging.
+
+The log contains the Windows computer name, user name and connected monitor identification. Review this information against your organization's privacy and support requirements before deployment.
+
 ## Uninstallation
 
 Run Windows PowerShell as administrator from a separate directory and execute:

@@ -16,3 +16,4 @@ All notable changes to this project will be documented in this file.
 - English, Dutch, German, French, Spanish, Italian and Portuguese translations.
 - Language selection through `config.json`.
 - Application icon for the interface and Start menu shortcut.
+- Persistent per-user logging with consistent severity levels and log rotation.

@@ -11,6 +11,7 @@ Add-Type -AssemblyName System.Drawing
 $ErrorActionPreference = 'Stop'
 
 $script:ApplicationName = 'Monitor Layout Assistant'
+$script:ApplicationVersion = '0.1.0'
 $script:PrimaryColor = [System.Drawing.Color]::FromArgb(36, 59, 83)
 $script:ButtonColor = [System.Drawing.Color]::FromArgb(44, 82, 130)
 $script:ButtonHoverColor = [System.Drawing.Color]::FromArgb(54, 101, 160)
@@ -19,6 +20,15 @@ $script:AccentColor = [System.Drawing.Color]::FromArgb(111, 168, 220)
 $script:ConfigurationPath = Join-Path $PSScriptRoot 'config.json'
 $script:LanguageFolderPath = Join-Path $PSScriptRoot 'Languages'
 $script:IconPath = Join-Path $PSScriptRoot 'Assets\MonitorLayoutAssistant.ico'
+$script:LogRoot = if ([string]::IsNullOrWhiteSpace($env:LOCALAPPDATA)) {
+    $env:TEMP
+}
+else {
+    $env:LOCALAPPDATA
+}
+$script:LogDirectory = Join-Path $script:LogRoot 'Monitor Layout Assistant\Logs'
+$script:LogPath = Join-Path $script:LogDirectory 'MonitorLayoutAssistant.log'
+$script:LoggingAvailable = $false
 $script:MonitorListPath = Join-Path $env:TEMP (
     'MonitorLayoutAssistant-{0}.csv' -f [guid]::NewGuid().ToString('N')
 )
@@ -105,10 +115,57 @@ function Get-LocalizedText {
     return $value
 }
 
-function Write-ApplicationLog {
-    param([Parameter(Mandatory)][string]$Message)
+function Initialize-ApplicationLogging {
+    try {
+        New-Item -ItemType Directory -Path $script:LogDirectory -Force |
+            Out-Null
 
-    Write-Host ('[{0}] {1}' -f (Get-Date -Format 'HH:mm:ss'), $Message)
+        if (Test-Path -LiteralPath $script:LogPath -PathType Leaf) {
+            $logFile = Get-Item -LiteralPath $script:LogPath
+            if ($logFile.Length -ge 2MB) {
+                $archivePath = "$script:LogPath.1"
+                Remove-Item -LiteralPath $archivePath -Force -ErrorAction SilentlyContinue
+                Move-Item -LiteralPath $script:LogPath -Destination $archivePath -Force
+            }
+        }
+
+        $script:LoggingAvailable = $true
+    }
+    catch {
+        $script:LoggingAvailable = $false
+        Write-Warning "File logging could not be initialized: $($_.Exception.Message)"
+    }
+}
+
+function Write-ApplicationLog {
+    param(
+        [Parameter(Mandatory)][string]$Message,
+        [ValidateSet('INFO', 'WARN', 'ERROR')][string]$Level = 'INFO'
+    )
+
+    $normalizedMessage = $Message -replace '[\r\n]+', ' '
+    $logLine = '{0} [{1}] {2}' -f
+        (Get-Date -Format 'yyyy-MM-dd HH:mm:ss.fff'),
+        $Level,
+        $normalizedMessage
+
+    $foregroundColor = switch ($Level) {
+        'WARN' { 'Yellow' }
+        'ERROR' { 'Red' }
+        default { 'Gray' }
+    }
+
+    Write-Host $logLine -ForegroundColor $foregroundColor
+
+    if ($script:LoggingAvailable) {
+        try {
+            Add-Content -LiteralPath $script:LogPath -Value $logLine -Encoding UTF8
+        }
+        catch {
+            $script:LoggingAvailable = $false
+            Write-Warning "File logging was disabled: $($_.Exception.Message)"
+        }
+    }
 }
 
 function Show-ApplicationMessage {
@@ -546,17 +603,26 @@ function ConvertTo-MonitorObjects {
 }
 
 $progressForm = $null
+Initialize-ApplicationLogging
 
 try {
     $configuration = Import-ApplicationConfiguration
     Initialize-Localization -Configuration $configuration
 
-    Write-ApplicationLog 'Starting Monitor Layout Assistant.'
-    Write-ApplicationLog "Selected language: $script:SelectedLanguage"
+    Write-ApplicationLog (
+        'Application started. Version={0} Computer={1} User={2} ProcessId={3}' -f
+        $script:ApplicationVersion,
+        $env:COMPUTERNAME,
+        $env:USERNAME,
+        $PID
+    )
+    Write-ApplicationLog "LogPath=$script:LogPath"
+    Write-ApplicationLog "Language selected. Language=$script:SelectedLanguage"
     $toolPath = Resolve-MultiMonitorToolPath -ExplicitPath $MultiMonitorToolPath -Configuration $configuration
-    Write-ApplicationLog "Using MultiMonitorTool: $toolPath"
+    Write-ApplicationLog "MultiMonitorTool found. Path=$toolPath"
 
     if (-not (Test-ExternalMonitorConnected -ToolPath $toolPath)) {
+        Write-ApplicationLog 'No external monitors were detected. Application exiting.' -Level WARN
         Show-ApplicationMessage `
             -Title (Get-LocalizedText -Key 'noExternalTitle') `
             -Message (Get-LocalizedText -Key 'noExternalMessage')
@@ -568,11 +634,11 @@ try {
 
     $side = Show-MonitorPositionDialog
     if ([string]::IsNullOrWhiteSpace($side)) {
-        Write-ApplicationLog 'No position selected. Exiting.'
+        Write-ApplicationLog 'No laptop position was selected. Application cancelled by user.' -Level WARN
         exit 0
     }
 
-    Write-ApplicationLog "Selected laptop position: $side."
+    Write-ApplicationLog "Laptop position selected. Position=$side"
     $progressForm = Show-ProgressDialog
     Update-ProgressStatus -Form $progressForm -Text (Get-LocalizedText -Key 'switchingToExtended')
 
@@ -603,6 +669,13 @@ try {
         throw (Get-LocalizedText -Key 'noExternalMonitors')
     }
 
+    Write-ApplicationLog (
+        'Displays detected. Total={0} External={1} BuiltIn={2}' -f
+        $monitors.Count,
+        $externalMonitors.Count,
+        [int]($null -ne $laptopMonitor)
+    )
+
     if ($side -eq 'left') {
         $sortedMonitors = @($laptopMonitor) + $externalMonitors
     }
@@ -612,13 +685,22 @@ try {
 
     $sortedMonitors = @($sortedMonitors | Where-Object { $null -ne $_ })
 
-    Write-ApplicationLog 'Display order reported by Windows:'
-    foreach ($monitor in $sortedMonitors) {
-        Write-Host (' - {0}: {1}' -f $monitor.Name, $monitor.DisplayName)
+    for ($index = 0; $index -lt $sortedMonitors.Count; $index++) {
+        $monitor = $sortedMonitors[$index]
+        Write-ApplicationLog (
+            'Display order. Index={0} Name={1} DisplayName={2} CurrentResolution={3} MaximumResolution={4} BuiltIn={5}' -f
+            $index,
+            $monitor.Name,
+            $monitor.DisplayName,
+            $monitor.Resolution,
+            $monitor.MaxResolution,
+            $monitor.IsLaptop
+        )
     }
 
     Update-ProgressStatus -Form $progressForm -Text (Get-LocalizedText -Key 'applyingResolutions')
     foreach ($monitor in $sortedMonitors) {
+        Write-ApplicationLog "Applying maximum resolution. Display=$($monitor.Name)"
         & $toolPath /SetMax $monitor.Name
     }
 
@@ -642,6 +724,7 @@ try {
     }
 
     Update-ProgressStatus -Form $progressForm -Text (Get-LocalizedText -Key 'arrangingMonitors')
+    Write-ApplicationLog "Applying display positions. DisplayCount=$($sortedMonitors.Count)"
     & $toolPath @monitorArguments
     Start-Sleep -Seconds 3
 
@@ -651,19 +734,28 @@ try {
     $primaryMonitor = $externalMonitors[$primaryIndex]
 
     Update-ProgressStatus -Form $progressForm -Text (Get-LocalizedText -Key 'settingPrimary')
-    Write-ApplicationLog "Setting primary display to $($primaryMonitor.DisplayName)."
+    Write-ApplicationLog (
+        'Setting primary display. Name={0} DisplayName={1}' -f
+        $primaryMonitor.Name,
+        $primaryMonitor.DisplayName
+    )
     & $toolPath /SetPrimary $primaryMonitor.Name
     & "$env:WINDIR\System32\DisplaySwitch.exe" /extend
     Start-Sleep -Seconds 2
 
-    Write-ApplicationLog 'Monitor configuration completed.'
+    Write-ApplicationLog 'Configuration completed successfully.'
     Show-ProgressCompleted -Form $progressForm
     $progressForm = $null
 }
 catch {
     Close-ProgressDialog -Form $progressForm
     $progressForm = $null
-    Write-Host "Error: $($_.Exception.Message)" -ForegroundColor Red
+    Write-ApplicationLog (
+        'Configuration failed. Message={0} Category={1} Stack={2}' -f
+        $_.Exception.Message,
+        $_.CategoryInfo.Category,
+        $_.ScriptStackTrace
+    ) -Level ERROR
 
     $errorTitle = if ($null -ne $script:Text) {
         Get-LocalizedText -Key 'configurationFailed'
