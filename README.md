@@ -13,21 +13,25 @@ The interface and configuration are intentionally simple. Monitor Layout Assista
 
 ## Screenshots
 
-### Select the laptop position
+### 1. Select the laptop position
 
-![Select whether the laptop is positioned to the left or right of the external monitors](Screenshots/select-position.png)
+![Select whether the laptop is positioned to the left or right of the external monitors](Screenshots/01-select-position.png)
 
-### Apply and complete the layout
+### Progress
 
-| Applying the layout | Layout completed |
-|---|---|
-| ![Monitor layout is being applied](Screenshots/applying-layout.png) | ![Monitor layout was applied successfully](Screenshots/layout-completed.png) |
+2. [Switching to extended desktop mode](Screenshots/02-switching-to-extended-mode.png)
+3. [Detecting connected monitors](Screenshots/03-detecting-monitors.png)
+4. [Applying the maximum available resolutions](Screenshots/04-applying-resolutions.png)
+5. [Arranging the monitors](Screenshots/05-arranging-monitors.png)
+6. [Setting the primary display](Screenshots/06-setting-primary-display.png)
 
-Additional progress states are available for [detecting connected monitors](Screenshots/detecting-monitors.png), [applying the maximum resolutions](Screenshots/applying-resolutions.png) and [arranging the monitors](Screenshots/arranging-monitors.png).
+### 7. Layout completed
 
-### Missing required dependency
+![Monitor layout was applied successfully](Screenshots/07-layout-completed.png)
 
-![Error shown when MultiMonitorTool cannot be found](Screenshots/missing-multimonitortool.png)
+### 8. Missing required dependency
+
+![Error shown when MultiMonitorTool cannot be found](Screenshots/08-missing-multimonitortool.png)
 
 ## Supported layout
 
