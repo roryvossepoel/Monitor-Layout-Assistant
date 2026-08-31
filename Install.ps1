@@ -68,7 +68,7 @@ $configuration = [ordered]@{
     multiMonitorToolPath = $configuredMultiMonitorToolPath
     language             = 'en-US'
     theme                = [ordered]@{
-        primary     = '#2563A5'
+        primary     = '#243B53'
         window      = '#FFFFFF'
         headerText  = '#FFFFFF'
         text        = [ordered]@{
@@ -76,16 +76,19 @@ $configuration = [ordered]@{
             secondary = '#525252'
         }
         choice      = [ordered]@{
-            background = '#F1F5F9'
-            foreground = '#174F86'
-            hover      = '#E2ECF7'
-            pressed    = '#D4E3F3'
-            border     = '#D6E2F0'
+            background = '#DCECF8'
+            foreground = '#174F7A'
+            hover      = '#C9E1F3'
+            pressed    = '#B5D5EC'
+            border     = '#DCECF8'
             borderSize = 0
+            arrowSize  = 26
         }
         information = [ordered]@{
-            background = '#F7F7F7'
-            accent     = '#9AA9B8'
+            background   = '#FFF8E1'
+            accent       = '#D99A00'
+            borderSize   = 1
+            cornerRadius = 8
         }
         controls    = [ordered]@{
             border = '#BECAD5'
