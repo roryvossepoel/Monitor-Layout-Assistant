@@ -23,7 +23,7 @@ The interface and configuration are intentionally simple. Monitor Layout Assista
 |---|---|
 | ![Monitor layout is being applied](Screenshots/applying-layout.png) | ![Monitor layout was applied successfully](Screenshots/layout-completed.png) |
 
-Additional progress states are available for [applying the maximum resolutions](Screenshots/applying-resolutions.png) and [arranging the monitors](Screenshots/arranging-monitors.png).
+Additional progress states are available for [detecting connected monitors](Screenshots/detecting-monitors.png), [applying the maximum resolutions](Screenshots/applying-resolutions.png) and [arranging the monitors](Screenshots/arranging-monitors.png).
 
 ### Missing required dependency
 
