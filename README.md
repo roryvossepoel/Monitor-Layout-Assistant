@@ -131,10 +131,9 @@ Interface colors can be changed without editing the PowerShell script. Add or mo
       "arrowSize": 26
     },
     "information": {
-      "background": "#FFF8E1",
-      "accent": "#D99A00",
-      "borderSize": 1,
-      "cornerRadius": 8
+      "background": "#FFFDF3",
+      "border": "#E8BE50",
+      "borderSize": 0
     },
     "controls": {
       "border": "#BECAD5"
@@ -143,7 +142,7 @@ Interface colors can be changed without editing the PowerShell script. Add or mo
 }
 ```
 
-The `choice.borderSize` value accepts a whole number from `0` through `5`; the default `0` creates borderless choice buttons. `choice.arrowSize` accepts `16` through `40`. The information panel supports a border of `0` through `5` pixels and a corner radius of `0` through `24` pixels. The installer writes this complete configuration to the installed `config.json` and replaces an existing configuration when run again. Individual settings may be omitted to retain their built-in defaults. Missing or invalid values do not prevent the application from starting; they are ignored and recorded as warnings in the application log. See `config.example.json` for a complete example.
+The `choice.borderSize` value accepts a whole number from `0` through `5`; the default `0` creates borderless choice buttons. `choice.arrowSize` accepts `16` through `40`. The information panel has square corners and supports an optional border of `0` through `5` pixels; `0` disables the border. The installer writes this complete configuration to the installed `config.json` and replaces an existing configuration when run again. Individual settings may be omitted to retain their built-in defaults. Missing or invalid values do not prevent the application from starting; they are ignored and recorded as warnings in the application log. See `config.example.json` for a complete example.
 
 ## Installation
 
