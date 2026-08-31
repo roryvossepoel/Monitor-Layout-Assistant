@@ -33,6 +33,10 @@ The interface and configuration are intentionally simple. Monitor Layout Assista
 
 ![Error shown when MultiMonitorTool cannot be found](Screenshots/08-missing-multimonitortool.png)
 
+### 9. No external monitors found
+
+![Message shown when no external monitor is connected](Screenshots/09-no-external-monitors.png)
+
 ## Supported layout
 
 The primary supported configuration is:
