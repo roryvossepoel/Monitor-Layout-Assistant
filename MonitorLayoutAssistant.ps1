@@ -12,11 +12,11 @@ $ErrorActionPreference = 'Stop'
 
 $script:ApplicationName = 'Monitor Layout Assistant'
 $script:ApplicationVersion = '0.1.0'
-$script:PrimaryColor = [System.Drawing.Color]::FromArgb(36, 59, 83)
-$script:ButtonColor = [System.Drawing.Color]::FromArgb(44, 82, 130)
-$script:ButtonHoverColor = [System.Drawing.Color]::FromArgb(54, 101, 160)
-$script:ButtonPressedColor = [System.Drawing.Color]::FromArgb(29, 61, 99)
-$script:AccentColor = [System.Drawing.Color]::FromArgb(111, 168, 220)
+$script:PrimaryColor = [System.Drawing.Color]::FromArgb(37, 99, 165)
+$script:ButtonColor = [System.Drawing.Color]::White
+$script:ButtonHoverColor = [System.Drawing.Color]::FromArgb(239, 246, 255)
+$script:ButtonPressedColor = [System.Drawing.Color]::FromArgb(219, 234, 254)
+$script:AccentColor = [System.Drawing.Color]::FromArgb(147, 197, 253)
 $script:ConfigurationPath = Join-Path $PSScriptRoot 'config.json'
 $script:LanguageFolderPath = Join-Path $PSScriptRoot 'Languages'
 $script:IconPath = Join-Path $PSScriptRoot 'Assets\MonitorLayoutAssistant.ico'
@@ -291,7 +291,7 @@ function New-HeaderPanel {
         [Parameter(Mandatory)][System.Windows.Forms.Form]$Form,
         [Parameter(Mandatory)][string]$Title,
         [Parameter(Mandatory)][int]$Width,
-        [int]$Height = 92
+        [int]$Height = 80
     )
 
     $header = New-Object System.Windows.Forms.Panel
@@ -303,10 +303,10 @@ function New-HeaderPanel {
     $label.Name = 'HeaderTitle'
     $label.Text = $Title
     $label.Size = New-Object System.Drawing.Size(($Width - 60), 44)
-    $label.Location = New-Object System.Drawing.Point(30, 23)
+    $label.Location = New-Object System.Drawing.Point(30, 18)
     $label.Font = New-Object System.Drawing.Font(
         'Segoe UI Semibold',
-        19,
+        17,
         [System.Drawing.FontStyle]::Bold
     )
     $label.ForeColor = [System.Drawing.Color]::White
@@ -324,73 +324,26 @@ function New-ChoiceCard {
         [Parameter(Mandatory)][ValidateSet('left', 'right')][string]$Value
     )
 
-    $card = New-Object System.Windows.Forms.Panel
+    $card = New-Object System.Windows.Forms.Button
     $card.Size = New-Object System.Drawing.Size(292, 132)
+    $card.Text = '{0}    {1}' -f $(if ($Value -eq 'left') { [char]0x2190 } else { [char]0x2192 }), $Title
     $card.BackColor = $script:ButtonColor
+    $card.ForeColor = $script:PrimaryColor
+    $card.Font = New-Object System.Drawing.Font('Segoe UI Semibold', 12)
+    $card.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
+    $card.FlatAppearance.BorderColor = $script:PrimaryColor
+    $card.FlatAppearance.BorderSize = 2
+    $card.FlatAppearance.MouseOverBackColor = $script:ButtonHoverColor
+    $card.FlatAppearance.MouseDownBackColor = $script:ButtonPressedColor
+    $card.UseVisualStyleBackColor = $false
     $card.Cursor = [System.Windows.Forms.Cursors]::Hand
     $card.Tag = $Value
-
-    $arrow = New-Object System.Windows.Forms.Label
-    $arrow.Text = if ($Value -eq 'left') { [char]0x2190 } else { [char]0x2192 }
-    $arrow.Size = New-Object System.Drawing.Size(82, 132)
-    $arrow.Location = New-Object System.Drawing.Point(0, 0)
-    $arrow.Font = New-Object System.Drawing.Font('Segoe UI Symbol', 30)
-    $arrow.ForeColor = [System.Drawing.Color]::White
-    $arrow.BackColor = [System.Drawing.Color]::Transparent
-    $arrow.TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
-
-    $separator = New-Object System.Windows.Forms.Panel
-    $separator.Size = New-Object System.Drawing.Size(1, 84)
-    $separator.Location = New-Object System.Drawing.Point(92, 24)
-    $separator.BackColor = $script:AccentColor
-
-    $titleLabel = New-Object System.Windows.Forms.Label
-    $titleLabel.Text = $Title
-    $titleLabel.Size = New-Object System.Drawing.Size(178, 132)
-    $titleLabel.Location = New-Object System.Drawing.Point(108, 0)
-    $titleLabel.Font = New-Object System.Drawing.Font('Segoe UI Semibold', 12)
-    $titleLabel.ForeColor = [System.Drawing.Color]::White
-    $titleLabel.BackColor = [System.Drawing.Color]::Transparent
-    $titleLabel.TextAlign = [System.Drawing.ContentAlignment]::MiddleLeft
-
-    $card.Controls.AddRange(@($arrow, $separator, $titleLabel))
-
-    foreach ($control in @($card, $arrow, $separator, $titleLabel)) {
-        $control.Cursor = [System.Windows.Forms.Cursors]::Hand
-        $control | Add-Member -NotePropertyName ChoiceCard -NotePropertyValue $card -Force
-
-        $control.Add_MouseEnter({
-            param($sender, $eventArgs)
-            $sender.ChoiceCard.BackColor = $script:ButtonHoverColor
-        })
-
-        $control.Add_MouseLeave({
-            param($sender, $eventArgs)
-            $target = $sender.ChoiceCard
-            $position = $target.PointToClient([System.Windows.Forms.Cursor]::Position)
-            if (-not $target.ClientRectangle.Contains($position)) {
-                $target.BackColor = $script:ButtonColor
-            }
-        })
-
-        $control.Add_MouseDown({
-            param($sender, $eventArgs)
-            $sender.ChoiceCard.BackColor = $script:ButtonPressedColor
-        })
-
-        $control.Add_MouseUp({
-            param($sender, $eventArgs)
-            $sender.ChoiceCard.BackColor = $script:ButtonHoverColor
-        })
-
-        $control.Add_Click({
-            param($sender, $eventArgs)
-            $target = $sender.ChoiceCard
-            $form = $target.FindForm()
-            $form.Tag = [string]$target.Tag
-            $form.Close()
-        })
-    }
+    $card.Add_Click({
+        param($sender, $eventArgs)
+        $form = $sender.FindForm()
+        $form.Tag = [string]$sender.Tag
+        $form.Close()
+    })
 
     return $card
 }
@@ -421,12 +374,12 @@ function Show-MonitorPositionDialog {
     $form.Controls.Add($rightCard)
 
     $infoPanel = New-Object System.Windows.Forms.Panel
-    $infoPanel.Size = New-Object System.Drawing.Size(632, 132)
+    $infoPanel.Size = New-Object System.Drawing.Size(632, 110)
     $infoPanel.Location = New-Object System.Drawing.Point(64, 344)
     $infoPanel.BackColor = [System.Drawing.Color]::FromArgb(244, 247, 250)
 
     $accentBar = New-Object System.Windows.Forms.Panel
-    $accentBar.Size = New-Object System.Drawing.Size(5, 132)
+    $accentBar.Size = New-Object System.Drawing.Size(4, 110)
     $accentBar.Location = New-Object System.Drawing.Point(0, 0)
     $accentBar.BackColor = $script:PrimaryColor
 
@@ -439,7 +392,7 @@ function Show-MonitorPositionDialog {
 
     $infoText = New-Object System.Windows.Forms.Label
     $infoText.Text = Get-LocalizedText -Key 'physicalOrderInformation'
-    $infoText.Size = New-Object System.Drawing.Size(575, 78)
+    $infoText.Size = New-Object System.Drawing.Size(575, 58)
     $infoText.Location = New-Object System.Drawing.Point(24, 43)
     $infoText.Font = New-Object System.Drawing.Font('Segoe UI', 9.5)
     $infoText.ForeColor = [System.Drawing.Color]::FromArgb(82, 82, 82)
