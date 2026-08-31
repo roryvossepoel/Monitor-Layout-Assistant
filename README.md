@@ -150,6 +150,12 @@ Administrators who want to suppress the console can assess and install [SeidChr/
 
 That directory is normally part of the system `PATH`. During installation, Monitor Layout Assistant checks this exact location. If `powershellw.exe` exists, the Start menu shortcut uses it. Otherwise, the shortcut uses the native `powershell.exe` and the console remains visible.
 
+The PowerShell host is stored in the shortcut when the installer runs; it is not detected again when the application starts. If `powershellw.exe` is copied to the recommended location after Monitor Layout Assistant has already been installed, the existing shortcut will continue to use `powershell.exe`. Run `Install.ps1` again to recreate the shortcut, or manually change its **Target** from `powershell.exe` to:
+
+```text
+%SystemRoot%\System32\WindowsPowerShell\v1.0\powershellw.exe
+```
+
 RunHiddenConsole is optional, is not included, and must be assessed separately before use.
 
 ## Manual use
