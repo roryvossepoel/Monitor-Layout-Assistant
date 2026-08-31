@@ -105,6 +105,33 @@ Set the language in `config.json`:
 
 Language selection is not derived from the Windows display language. Change the `language` value in `config.json` whenever another included translation should be used.
 
+## Interface colors
+
+Interface colors can be changed without editing the PowerShell script. Add or modify the `theme` section in `config.json` using six-digit hexadecimal colors:
+
+```json
+{
+  "multiMonitorToolPath": "",
+  "language": "en-US",
+  "theme": {
+    "primary": "#2563A5",
+    "choice": "#FFFFFF",
+    "choiceText": "#2563A5",
+    "choiceHover": "#EFF6FF",
+    "choicePressed": "#DBEAFE",
+    "accent": "#93C5FD",
+    "window": "#FFFFFF",
+    "information": "#F4F7FA",
+    "primaryText": "#202020",
+    "secondaryText": "#525252",
+    "headerText": "#FFFFFF",
+    "controlBorder": "#BECAD5"
+  }
+}
+```
+
+The installer writes these neutral default colors to the installed `config.json`. Individual settings may be omitted to retain their built-in defaults. Missing or invalid values do not prevent the application from starting; they are ignored and recorded as warnings in the application log. Running the installer again preserves the existing language and theme settings. See `config.example.json` for a complete example.
+
 ## Installation
 
 ### Standard installation
