@@ -11,6 +11,24 @@ The application then:
 
 The interface and configuration are intentionally simple. Monitor Layout Assistant is intended for standardized desks where external monitors are connected in a consistent order.
 
+## Screenshots
+
+### Select the laptop position
+
+![Select whether the laptop is positioned to the left or right of the external monitors](Screenshots/select-position.png)
+
+### Apply and complete the layout
+
+| Applying the layout | Layout completed |
+|---|---|
+| ![Monitor layout is being applied](Screenshots/applying-layout.png) | ![Monitor layout was applied successfully](Screenshots/layout-completed.png) |
+
+An additional progress state is available in [`Screenshots/arranging-monitors.png`](Screenshots/arranging-monitors.png).
+
+### Missing required dependency
+
+![Error shown when MultiMonitorTool cannot be found](Screenshots/missing-multimonitortool.png)
+
 ## Supported layout
 
 The primary supported configuration is:
