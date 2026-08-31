@@ -64,16 +64,63 @@ if ($null -ne $sourceMultiMonitorTool) {
     Copy-Item -LiteralPath $sourceMultiMonitorTool -Destination $InstallPath -Force
 }
 
+$installedConfigurationPath = Join-Path $InstallPath 'config.json'
+$existingConfiguration = $null
+if (Test-Path -LiteralPath $installedConfigurationPath -PathType Leaf) {
+    try {
+        $existingConfiguration = Get-Content `
+            -LiteralPath $installedConfigurationPath `
+            -Raw | ConvertFrom-Json
+    }
+    catch {
+        Write-Warning 'The existing config.json is invalid and will be replaced.'
+    }
+}
+
+$theme = [ordered]@{
+    primary       = '#2563A5'
+    choice        = '#FFFFFF'
+    choiceText    = '#2563A5'
+    choiceHover   = '#EFF6FF'
+    choicePressed = '#DBEAFE'
+    accent        = '#93C5FD'
+    window        = '#FFFFFF'
+    information   = '#F4F7FA'
+    primaryText   = '#202020'
+    secondaryText = '#525252'
+    headerText    = '#FFFFFF'
+    controlBorder = '#BECAD5'
+}
+
+if ($null -ne $existingConfiguration.theme) {
+    foreach ($key in @($theme.Keys)) {
+        $property = $existingConfiguration.theme.PSObject.Properties[$key]
+        if ($null -ne $property) {
+            $theme[$key] = [string]$property.Value
+        }
+    }
+}
+
+$configuredLanguage = 'en-US'
+if (-not [string]::IsNullOrWhiteSpace([string]$existingConfiguration.language)) {
+    $configuredLanguage = [string]$existingConfiguration.language
+}
+
 $configuration = [ordered]@{
     multiMonitorToolPath = $configuredMultiMonitorToolPath
-    language             = 'en-US'
+    language             = $configuredLanguage
+    theme                = $theme
 }
 
 $configuration |
-    ConvertTo-Json |
-    Set-Content -LiteralPath (Join-Path $InstallPath 'config.json') -Encoding UTF8
+    ConvertTo-Json -Depth 3 |
+    Set-Content -LiteralPath $installedConfigurationPath -Encoding UTF8
 
-$powerShellHost = if (Test-Path -LiteralPath $recommendedPowerShellW -PathType Leaf) {
+$hiddenPowerShellAvailable = Test-Path `
+    -LiteralPath $recommendedPowerShellW `
+    -PathType Leaf
+
+$powerShellHost = if ($hiddenPowerShellAvailable) {
     $recommendedPowerShellW
 }
 else {
@@ -93,3 +140,14 @@ $shortcut.Save()
 Write-Host "$applicationName was installed successfully." -ForegroundColor Green
 Write-Host "Installation path: $InstallPath"
 Write-Host "PowerShell host: $powerShellHost"
+
+if (-not $hiddenPowerShellAvailable) {
+    Write-Warning @"
+powershellw.exe was not found at the recommended location. The shortcut uses the native powershell.exe, so a console window will remain visible while the application is running.
+
+RunHiddenConsole is optional and must be assessed separately before use. If powershellw.exe is added later at:
+$recommendedPowerShellW
+
+run Install.ps1 again to recreate the shortcut with the hidden PowerShell host.
+"@
+}
